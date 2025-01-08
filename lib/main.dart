@@ -15,6 +15,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 import 'screens/login/login_screen.dart';
 import 'package:emprestafacil/screens/dashboard/dashboard_screen.dart';
+import 'package:emprestafacil/screens/emprestimo/editar_emprestimo_screen.dart';
 
 void main() async {
   // Inicializar o Sqflite para ambientes de desktop
@@ -92,13 +93,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => SimulacaoEmprestimoScreen(simulacao: simulacao),
             );
-
           case '/criar-emprestimo':
             final simulacao = settings.arguments as Simulacao?;
             return MaterialPageRoute(
               builder: (context) => CriarEmprestimoScreen(simulacao: simulacao),
             );
-
           case '/detalhes-emprestimo':
             if (settings.arguments is Emprestimo) {
               final emprestimo = settings.arguments as Emprestimo;
@@ -112,6 +111,11 @@ class MyApp extends StatelessWidget {
                 ),
               );
             }
+          case '/editar-emprestimo':
+            final emprestimo = settings.arguments as Emprestimo;
+            return MaterialPageRoute(
+              builder: (context) => EditarEmprestimoScreen(emprestimo: emprestimo),
+            );
 
           default:
             return null;
