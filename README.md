@@ -2,6 +2,10 @@
 
 EmprestaFácil é um aplicativo simples e eficiente para gerenciar seus empréstimos. Com ele, você pode registrar, acompanhar e organizar todas as suas transações de forma prática e intuitiva. Controle prazos, valores e pagamentos, tudo em um só lugar, com facilidade e rapidez. Ideal para quem precisa de uma solução descomplicada para manter suas finanças em dia.
 
+## Sobre o Facilite
+
+Facilite é a solução ideal para quem busca simplicidade e eficiência na gestão financeira, seja para uso pessoal ou profissional.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
