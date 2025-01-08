@@ -46,6 +46,9 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.4
   mask_text_input_formatter: ^2.9.0
+  animate_do: ^3.3.4
+  glassmorphism_widgets: ^0.2.2
+  flutter_multi_formatter: ^2.13.0
 
 dev_dependencies:
   flutter_test:
