@@ -1,5 +1,4 @@
 import 'package:facilite/data/models/emprestimo.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
@@ -23,30 +22,51 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   double _zoomLevel = 1.0;
   double _initialRadius = 50.0;
   String _searchText = '';
-  // Adicione uma variável para armazenar a previsão de recebimentos
   List<Map<String, dynamic>> _previsaoRecebimentos = [];
+  bool _previsaoCarregada = false;
+  bool _isLoadingPrevisao = true;
+  String? _erroPrevisao;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
       vsync: this,
-      duration: const Duration(milliseconds: 800),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-    _carregarRelatorio();
-    _carregarPrevisao(); // Adicione esta linha para carregar a previsão ao iniciar a tela
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarRelatorio();
+      _carregarPrevisao();
+    });
   }
 
-  // Adicione este metodo para carregar a previsão e atualizar o estado
   Future<void> _carregarPrevisao() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    final previsao = await appState.calcularPrevisaoRecebimentos(6); // Previsão para 6 meses
+    if (_previsaoCarregada) return;
+
     setState(() {
-      _previsaoRecebimentos = previsao;
+      _isLoadingPrevisao = true;
+      _erroPrevisao = null;
     });
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final previsao = await appState.calcularPrevisaoRecebimentos(6);
+      setState(() {
+        _previsaoRecebimentos = previsao;
+        _previsaoCarregada = true;
+      });
+    } catch (e) {
+      print("Erro ao carregar previsão: $e");
+      setState(() {
+        _erroPrevisao = "Erro ao carregar previsão. Tente novamente.";
+      });
+    } finally {
+      setState(() {
+        _isLoadingPrevisao = false;
+      });
+    }
   }
 
   @override
@@ -58,11 +78,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Future<void> _carregarRelatorio({List<Emprestimo>? emprestimosFiltrados}) async {
     final appState = Provider.of<AppState>(context, listen: false);
 
-    // Use os empréstimos filtrados se fornecidos, caso contrário, carregue os empréstimos do mês e ano selecionados
     final List<Emprestimo> emprestimos = emprestimosFiltrados ??
         await appState.databaseHelper.getEmprestimosPorMesEAno(mesSelecionado, anoSelecionado);
 
-    // Calcular os totais com base nos empréstimos (filtrados ou não)
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
     double lucro = 0.0;
@@ -77,7 +95,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       lucro += recebido - emprestimo.valor;
     }
 
-    // Calcular a tendência de empréstimos (isso ainda pode usar todos os empréstimos)
     List<Map<String, dynamic>> tendenciaEmprestimos = [];
     for (int i = 5; i >= 0; i--) {
       DateTime data = DateTime(anoSelecionado, mesSelecionado - i, 1);
@@ -103,8 +120,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         'pendente': totalEmprestado - totalRecebido,
         'tendenciaEmprestimos': tendenciaEmprestimos,
       };
+      _animationController.forward(from: 0.0);
     });
-    _animationController.forward(from: 0.0);
   }
 
   @override
@@ -138,11 +155,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: TextField(
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'Buscar por cliente...',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          prefixIcon: Icon(Icons.search, color: Colors.white70),
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
                           filled: true,
                           fillColor: Colors.grey[850]?.withOpacity(0.5),
                           border: OutlineInputBorder(
@@ -162,7 +179,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                         },
                       ),
                     ),
-                    // Adicione a seção de previsão de recebimentos aqui
                     _buildPrevisaoRecebimentos(),
                   ],
                 ),
@@ -179,58 +195,230 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildPrevisaoRecebimentos() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Previsão de Recebimentos Futuros',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[850]?.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
         ),
-        const SizedBox(height: 8),
-        FutureBuilder<List<Map<String, dynamic>>>(
-          future: Provider.of<AppState>(context, listen: false).calcularPrevisaoRecebimentos(6),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-              );
-            } else if (snapshot.hasError) {
-              return const Text('Erro ao carregar a previsão', style: TextStyle(color: Colors.red));
-            } else if (snapshot.hasData) {
-              _previsaoRecebimentos = snapshot.data!;
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _previsaoRecebimentos.length,
-                itemBuilder: (context, index) {
-                  final item = _previsaoRecebimentos[index];
-                  return ListTile(
-                    title: Text(
-                      item['mes'],
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    trailing: Text(
-                      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(item['valor']),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Previsão de Recebimentos',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: Colors.white70),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: Colors.grey[900],
+                      title: const Text(
+                        'Sobre a Previsão',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: const Text(
+                        'Esta previsão considera todos os pagamentos agendados para os próximos 6 meses, baseando-se nas parcelas em aberto dos empréstimos ativos.',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Fechar'),
+                        ),
+                      ],
                     ),
                   );
                 },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: Provider.of<AppState>(context, listen: false)
+                .calcularPrevisaoRecebimentos(6),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red[400]),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Erro ao carregar previsão',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 48,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhum recebimento previsto',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              _previsaoRecebimentos = snapshot.data!;
+              double totalPrevisto = _previsaoRecebimentos
+                  .fold(0.0, (sum, item) => sum + (item['valor'] as double));
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Previsto:',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'pt_BR',
+                            symbol: 'R\$',
+                          ).format(totalPrevisto),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _previsaoRecebimentos.length,
+                    separatorBuilder: (context, index) => const Divider(
+                      color: Colors.white10,
+                      height: 1,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = _previsaoRecebimentos[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    item['mes'],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  NumberFormat.currency(
+                                    locale: 'pt_BR',
+                                    symbol: 'R\$',
+                                  ).format(item['valor']),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${((item['valor'] / totalPrevisto) * 100).toStringAsFixed(1)}%',
+                                style: TextStyle(
+                                  color: Colors.green[400],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               );
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
-        ),
-      ],
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildResumo() {
-    // Use os valores do relatorio que agora são baseados na lista filtrada
     return Wrap(
       spacing: 8.0,
       runSpacing: 8.0,
@@ -265,7 +453,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Widget _buildResumoCard(String label, double value, IconData icon, Color color) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - 32) / 2; // 2 cards per row with padding
+    final cardWidth = (screenWidth - 32) / 2;
 
     return Container(
       width: cardWidth,
@@ -715,7 +903,4 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       ),
     );
   }
-
-
-
 }
