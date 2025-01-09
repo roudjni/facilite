@@ -627,66 +627,71 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           final emprestimo = emprestimos[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 6.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[850]?.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 1,
+            child: InkWell(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/detalhes-emprestimo',
+                  arguments: emprestimo,
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[850]?.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12.0,
-                  vertical: 6.0,
-                ),
-                leading: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                  child: Text(
-                    emprestimo.nome[0].toUpperCase(),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 6.0,
+                  ),
+                  leading: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                    child: Text(
+                      emprestimo.nome[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    emprestimo.nome,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),
-                ),
-                title: Text(
-                  emprestimo.nome,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Text(
-                  NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(emprestimo.valor),
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 13,
-                  ),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: emprestimo.parcelas > 0
-                        ? Colors.orange.withOpacity(0.2)
-                        : Colors.green.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    emprestimo.parcelas > 0 ? 'Em andamento' : 'Quitado',
+                  subtitle: Text(
+                    _getStatusEmprestimo(emprestimo),
                     style: TextStyle(
-                      color: emprestimo.parcelas > 0
-                          ? Colors.orange[400]
-                          : Colors.green[400],
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(emprestimo.parcelasDetalhes).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getStatus(emprestimo.parcelasDetalhes),
+                      style: TextStyle(
+                        color: _getStatusColor(emprestimo.parcelasDetalhes),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -697,6 +702,51 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         childCount: emprestimos.length,
       ),
     );
+  }
+
+  String _getStatusEmprestimo(Emprestimo emprestimo) {
+    final totalParcelas = emprestimo.parcelasDetalhes.length;
+    final parcelasPagas = emprestimo.parcelasDetalhes.where((p) => p['status'] == 'Paga').length;
+
+    if (parcelasPagas == totalParcelas) {
+      return 'Quitado';
+    } else if (parcelasPagas == 0) {
+      return '0/$totalParcelas parcelas';
+    } else {
+      return '$parcelasPagas/$totalParcelas parcelas';
+    }
+  }
+
+  String _getStatus(List<Map<String, dynamic>> parcelasDetalhes) {
+    final todasPagas = parcelasDetalhes.every((parcela) => parcela['status'] == 'Paga');
+    final temParcelasAtrasadas = parcelasDetalhes.any((parcela) {
+      final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+      return DateTime.now().isAfter(dataVencimento) && parcela['status'] != 'Paga';
+    });
+
+    if (todasPagas) {
+      return 'Quitado';
+    } else if (temParcelasAtrasadas) {
+      return 'Atrasado';
+    } else {
+      return 'Em andamento';
+    }
+  }
+
+  Color _getStatusColor(List<Map<String, dynamic>> parcelasDetalhes) {
+    final todasPagas = parcelasDetalhes.every((parcela) => parcela['status'] == 'Paga');
+    final temParcelasAtrasadas = parcelasDetalhes.any((parcela) {
+      final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+      return DateTime.now().isAfter(dataVencimento) && parcela['status'] != 'Paga';
+    });
+
+    if (todasPagas) {
+      return Colors.green;
+    } else if (temParcelasAtrasadas) {
+      return Colors.red;
+    } else {
+      return Colors.orange;
+    }
   }
 
   Widget _buildFiltroMesAno() {
