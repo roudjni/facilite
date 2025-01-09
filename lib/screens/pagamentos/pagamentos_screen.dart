@@ -99,29 +99,37 @@ class _PagamentosScreenState extends State<PagamentosScreen> {
           emprestimo.nome,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Parcelas: $numeroPagas/${emprestimo.parcelas}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-            if (proximaParcela['dataVencimento'].isNotEmpty)
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                'Próximo Vencimento: ${proximaParcela['dataVencimento']}',
+                'Parcelas: $numeroPagas/${emprestimo.parcelas}',
                 style: const TextStyle(color: Colors.grey),
               ),
-          ],
-        ),
+              if (proximaParcela['dataVencimento'].isNotEmpty)
+                Text(
+                  'Próximo Vencimento: ${proximaParcela['dataVencimento']}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              if (proximaParcela['valor'] != null) // Exibe o valor da parcela, se disponível
+                Text(
+                  'Valor da Parcela: R\$ ${proximaParcela['valor'].toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+            ],
+          ), // Exibe o valor da parcela, se disponível
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (parcelasAtrasadas.isNotEmpty || _deveEnviarLembrete(emprestimo))
+            if (parcelasAtrasadas.isNotEmpty)
               IconButton(
-                icon: const Icon(Icons.sms_failed_outlined, color: Colors.green),
-                onPressed: () => _enviarLembreteWhatsApp(
-                    emprestimo,
-                    parcelasAtrasadas.isNotEmpty ? parcelasAtrasadas : [proximaParcela]),
+                icon: const Icon(Icons.warning, color: Colors.red),
+                onPressed: () => _enviarLembreteWhatsApp(emprestimo, parcelasAtrasadas),
+              ),
+            if (_deveEnviarLembrete(emprestimo))
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.blue),
+                onPressed: () => _enviarLembreteWhatsApp(emprestimo, [proximaParcela]),
               ),
             Icon(
               _getStatusIcon(emprestimo),
@@ -149,7 +157,12 @@ class _PagamentosScreenState extends State<PagamentosScreen> {
     }
 
     final vencimento = DateFormat('dd/MM/yyyy').parse(proximaParcela['dataVencimento']);
-    return vencimento.difference(DateTime.now()).inDays == 2;
+    final diferenca = vencimento.difference(DateTime.now()).inDays;
+
+
+    // Verifica se o vencimento está entre 1 e 2 dias
+    return diferenca >= 1 && diferenca <= 2;
+
   }
 
   Future<void> _enviarLembreteWhatsApp(Emprestimo emprestimo, List<Map<String, dynamic>> parcelas) async {
@@ -175,7 +188,7 @@ class _PagamentosScreenState extends State<PagamentosScreen> {
 
   String _gerarMensagemWhatsApp(String nome, List<Map<String, dynamic>> parcelas) {
     String mensagem = "📢 *Lembrete de Pagamento* 📢\n\n"
-        "Olá, $nome. Aqui estão as informações sobre o seu próximo pagamento:\n\n";
+        "Olá, $nome. Aqui estão as informações sobre o seu pagamento:\n\n";
 
     for (var parcela in parcelas) {
       mensagem += "🔹 Parcela ${parcela['numero']}:\n"
