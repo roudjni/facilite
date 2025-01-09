@@ -247,13 +247,13 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     }
 
     if (_previsaoRecebimentos.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 48, color: Colors.white70),
-            const SizedBox(height: 16),
-            const Text(
+            Icon(Icons.calendar_today_outlined, size: 48, color: Colors.white70),
+            SizedBox(height: 16),
+            Text(
               'Nenhum recebimento previsto',
               style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
@@ -266,8 +266,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         _indiceInicialPrevisao,
         _indiceInicialPrevisao + _mesesExibidos > _previsaoRecebimentos.length
             ? _previsaoRecebimentos.length
-            : _indiceInicialPrevisao + _mesesExibidos
-    );
+            : _indiceInicialPrevisao + _mesesExibidos);
 
     return Container(
       padding: const EdgeInsets.all(16),
