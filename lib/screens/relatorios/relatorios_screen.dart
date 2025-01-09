@@ -70,16 +70,16 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   children: [
                     _buildResumo(),
                     const SizedBox(height: 16),
-                    _buildGraficoSection(
-                      title: 'Tendência de Empréstimos (Últimos 6 meses)',
-                      child: _buildGraficoDeLinha(relatorio!['tendenciaEmprestimos']),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGraficoSection(
-                      title: 'Comparativo de Lucros Mensais',
-                      child: _buildGraficoDeBarras(),
-                    ),
-                    const SizedBox(height: 16),
+                    // _buildGraficoSection(
+                    //   title: 'Tendência de Empréstimos (Últimos 6 meses)',
+                    //   child: _buildGraficoDeLinha(relatorio!['tendenciaEmprestimos']),
+                    // ),
+                    // const SizedBox(height: 16),
+                    // _buildGraficoSection(
+                    //   title: 'Comparativo de Lucros Mensais',
+                    //   child: _buildGraficoDeBarras(),
+                    // ),
+                    // const SizedBox(height: 16),
                     _buildGraficoSection(
                       title: 'Recebido vs. Pendente',
                       child: _buildGraficoDePizza(),
@@ -217,66 +217,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildGraficoDeBarras() {
-    final dadosMensais = [10.0, 20.0, 15.0, 25.0, 30.0];
-    final meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
-
-    return SizedBox(
-      height: 200,
-      child: BarChart(
-        BarChartData(
-          barGroups: dadosMensais.asMap().entries.map((entry) {
-            return BarChartGroupData(
-              x: entry.key,
-              barRods: [
-                BarChartRodData(
-                  toY: entry.value,
-                  gradient: LinearGradient(
-                    colors: [Colors.blue[300]!, Colors.blue[700]!],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                  width: 12,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            );
-          }).toList(),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      meses[value.toInt()],
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-          ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          backgroundColor: Colors.transparent,
-        ),
-      ),
-    );
-  }
 
   Widget _buildGraficoDePizza() {
     final recebido = relatorio!['totalRecebido'];
@@ -289,6 +229,17 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         children: [
           PieChart(
             PieChartData(
+              pieTouchData: PieTouchData(
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  setState(() {
+                    if (!event.isInterestedForInteractions ||
+                        pieTouchResponse == null ||
+                        pieTouchResponse.touchedSection == null) {
+                      return;
+                    }
+                  });
+                },
+              ),
               sections: [
                 PieChartSectionData(
                   value: recebido,
@@ -300,6 +251,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
+                  badgeWidget: _buildBadge(
+                    'R\$ ${NumberFormat.compact().format(recebido)}',
+                    Colors.green[900]!,
+                  ),
+                  badgePositionPercentageOffset: .98,
                 ),
                 PieChartSectionData(
                   value: pendente,
@@ -311,6 +267,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
+                  badgeWidget: _buildBadge(
+                    'R\$ ${NumberFormat.compact().format(pendente)}',
+                    Colors.orange[900]!,
+                  ),
+                  badgePositionPercentageOffset: .98,
                 ),
               ],
               sectionsSpace: 2,
@@ -334,6 +295,24 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -503,7 +482,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              const Text(
                 'Selecionar Período',
                 style: TextStyle(
                   color: Colors.white,
@@ -513,7 +492,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
               ),
               const SizedBox(height: 24),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[850],
                   borderRadius: BorderRadius.circular(8),
@@ -525,8 +504,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   value: mes,
                   isExpanded: true,
                   dropdownColor: Colors.grey[850],
-                  style: TextStyle(color: Colors.white),
-                  underline: SizedBox(),
+                  style: const TextStyle(color: Colors.white),
+                  underline: const SizedBox(),
                   items: List.generate(
                     12,
                         (index) => DropdownMenuItem(
@@ -539,7 +518,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
               ),
               const SizedBox(height: 16),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[850],
                   borderRadius: BorderRadius.circular(8),
@@ -551,8 +530,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   value: ano,
                   isExpanded: true,
                   dropdownColor: Colors.grey[850],
-                  style: TextStyle(color: Colors.white),
-                  underline: SizedBox(),
+                  style: const TextStyle(color: Colors.white),
+                  underline: const SizedBox(),
                   items: List.generate(
                     5,
                         (index) => DropdownMenuItem(
@@ -569,7 +548,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
+                    child: const Text(
                       'Cancelar',
                       style: TextStyle(color: Colors.white70),
                     ),
@@ -598,96 +577,4 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildGraficoDeLinha(List<Map<String, dynamic>> tendenciaEmprestimos) {
-    return SizedBox(
-      height: 200,
-      child: LineChart(
-        LineChartData(
-          lineBarsData: [
-            LineChartBarData(
-              spots: tendenciaEmprestimos.asMap().entries.map((entry) {
-                return FlSpot(entry.key.toDouble(), entry.value['valor'] / 1000); // Dividir por 1000 para simplificar a escala
-              }).toList(),
-              isCurved: true,
-              gradient: LinearGradient(
-                colors: [Colors.blue[300]!, Colors.blue[700]!],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [Colors.blue[300]!.withOpacity(0.3), Colors.blue[700]!.withOpacity(0.3)],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                ),
-              ),
-            ),
-          ],
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      tendenciaEmprestimos[value.toInt()]['mes'],
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 36,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value}K', // Formato '1K', '2K', etc.
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: 1000,
-            getDrawingHorizontalLine: (value) {
-              return FlLine(
-                color: Colors.white.withOpacity(0.2),
-                strokeWidth: 1,
-              );
-            },
-          ),
-          borderData: FlBorderData(
-            show: true,
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-        ),
-      ),
-    );
-  }
 }
