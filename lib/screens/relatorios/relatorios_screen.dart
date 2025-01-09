@@ -28,6 +28,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   bool _previsaoCarregada = false;
   bool _isLoadingPrevisao = true;
   String? _erroPrevisao;
+  int _indiceInicialPrevisao = 0; // Variável para controlar o índice inicial da previsão
+  final int _mesesExibidos = 4; // Número de meses exibidos na previsão
 
   @override
   void initState() {
@@ -157,9 +159,20 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   children: [
                     _buildResumo(),
                     const SizedBox(height: 16),
-                    _buildGraficoSection(
-                      title: 'Recebido vs. Pendente',
-                      child: _buildGraficoDePizza(),
+                    Row( // Alterando para Row para colocar as seções lado a lado
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildGraficoSection(
+                            title: 'Recebido vs. Pendente',
+                            child: _buildGraficoDePizza(),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildPrevisaoRecebimentos(),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Padding(
@@ -189,7 +202,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                         },
                       ),
                     ),
-                    _buildPrevisaoRecebimentos(),
                   ],
                 ),
               ),
@@ -205,6 +217,58 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildPrevisaoRecebimentos() {
+    if (_isLoadingPrevisao) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+        ),
+      );
+    }
+
+    if (_erroPrevisao != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _erroPrevisao!,
+              style: const TextStyle(color: Colors.red, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _carregarPrevisao,
+              child: const Text('Tentar Novamente'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_previsaoRecebimentos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.calendar_today_outlined, size: 48, color: Colors.white70),
+            const SizedBox(height: 16),
+            const Text(
+              'Nenhum recebimento previsto',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final previsaoExibida = _previsaoRecebimentos.sublist(
+        _indiceInicialPrevisao,
+        _indiceInicialPrevisao + _mesesExibidos > _previsaoRecebimentos.length
+            ? _previsaoRecebimentos.length
+            : _indiceInicialPrevisao + _mesesExibidos
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -218,210 +282,58 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Previsão de Recebimentos',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: previsaoExibida.length,
+              itemBuilder: (context, index) {
+                final item = previsaoExibida[index];
+                return ListTile(
+                  title: Text(item['mes'], style: const TextStyle(color: Colors.white)),
+                  trailing: Text(
+                    'R\$ ${item['valor'].toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Previsão de Recebimentos',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                onPressed: _indiceInicialPrevisao > 0
+                    ? () {
+                  setState(() {
+                    _indiceInicialPrevisao--;
+                  });
+                }
+                    : null,
               ),
               IconButton(
-                icon: const Icon(Icons.info_outline, color: Colors.white70),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: Colors.grey[900],
-                      title: const Text(
-                        'Sobre a Previsão',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      content: const Text(
-                        'Esta previsão considera todos os pagamentos agendados para os próximos 6 meses, baseando-se nas parcelas em aberto dos empréstimos ativos.',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Fechar'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                icon: const Icon(Icons.arrow_forward, color: Colors.white70),
+                onPressed: _indiceInicialPrevisao + _mesesExibidos < _previsaoRecebimentos.length
+                    ? () {
+                  setState(() {
+                    _indiceInicialPrevisao++;
+                  });
+                }
+                    : null,
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: Provider.of<AppState>(context, listen: false)
-                .calcularPrevisaoRecebimentos(6),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red[400]),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Erro ao carregar previsão',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 48,
-                        color: Colors.white.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum recebimento previsto',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              _previsaoRecebimentos = snapshot.data!;
-              double totalPrevisto = _previsaoRecebimentos
-                  .fold(0.0, (sum, item) => sum + (item['valor'] as double));
-
-              return Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.blue.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Previsto:',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          NumberFormat.currency(
-                            locale: 'pt_BR',
-                            symbol: 'R\$',
-                          ).format(totalPrevisto),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _previsaoRecebimentos.length,
-                    separatorBuilder: (context, index) => const Divider(
-                      color: Colors.white10,
-                      height: 1,
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = _previsaoRecebimentos[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    item['mes'],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  NumberFormat.currency(
-                                    locale: 'pt_BR',
-                                    symbol: 'R\$',
-                                  ).format(item['valor']),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${((item['valor'] / totalPrevisto) * 100).toStringAsFixed(1)}%',
-                                style: TextStyle(
-                                  color: Colors.green[400],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
           ),
         ],
       ),
