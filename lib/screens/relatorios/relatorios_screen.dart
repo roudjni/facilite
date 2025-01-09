@@ -100,16 +100,16 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
-    double lucro = 0.0;
+    double lucroEsperado = 0.0;
 
     for (final emprestimo in emprestimos) {
       totalEmprestado += emprestimo.valor;
-      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
+      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100); // Valor total a ser recebido
       final recebido = emprestimo.parcelasDetalhes
           .where((p) => p['status'] == 'Paga')
           .fold(0.0, (sum, p) => sum + p['valor']);
       totalRecebido += recebido;
-      lucro += recebido - emprestimo.valor;
+      lucroEsperado += valorTotal - emprestimo.valor; // Lucro esperado: valor total - valor emprestado
     }
 
     // Tendência de empréstimos (pode ser adaptado para a visualização geral, se necessário)
@@ -136,7 +136,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       relatorio = {
         'totalEmprestado': totalEmprestado,
         'totalRecebido': totalRecebido,
-        'lucro': lucro,
+        'lucro': lucroEsperado, // Usando lucroEsperado
         'pendente': totalEmprestado - totalRecebido,
         'tendenciaEmprestimos': tendenciaEmprestimos,
       };
@@ -365,8 +365,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           Colors.green,
         ),
         _buildResumoCard(
-          'Lucro',
-          relatorio!['lucro'],
+          'Lucro Esperado', // Nome do card alterado
+          relatorio!['lucro'], // Usando o valor de lucroEsperado
           Icons.trending_up,
           Colors.purple,
         ),
