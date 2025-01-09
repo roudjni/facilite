@@ -1,3 +1,4 @@
+import 'package:facilite/data/models/emprestimo.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   late Animation<double> _fadeAnimation;
   double _zoomLevel = 1.0;
   double _initialRadius = 50.0;
-  bool _isZooming = false;
+  String _searchText = '';
+
 
   @override
   void initState() {
@@ -42,11 +44,54 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     super.dispose();
   }
 
-  Future<void> _carregarRelatorio() async {
+  Future<void> _carregarRelatorio({List<Emprestimo>? emprestimosFiltrados}) async {
     final appState = Provider.of<AppState>(context, listen: false);
-    final dados = await appState.calcularRelatorioMensal(mesSelecionado, anoSelecionado);
+
+    // Use os empréstimos filtrados se fornecidos, caso contrário, carregue os empréstimos do mês e ano selecionados
+    final List<Emprestimo> emprestimos = emprestimosFiltrados ??
+        await appState.databaseHelper.getEmprestimosPorMesEAno(mesSelecionado, anoSelecionado);
+
+    // Calcular os totais com base nos empréstimos (filtrados ou não)
+    double totalEmprestado = 0.0;
+    double totalRecebido = 0.0;
+    double lucro = 0.0;
+
+    for (final emprestimo in emprestimos) {
+      totalEmprestado += emprestimo.valor;
+      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
+      final recebido = emprestimo.parcelasDetalhes
+          .where((p) => p['status'] == 'Paga')
+          .fold(0.0, (sum, p) => sum + p['valor']);
+      totalRecebido += recebido;
+      lucro += recebido - emprestimo.valor;
+    }
+
+    // Calcular a tendência de empréstimos (isso ainda pode usar todos os empréstimos)
+    List<Map<String, dynamic>> tendenciaEmprestimos = [];
+    for (int i = 5; i >= 0; i--) {
+      DateTime data = DateTime(anoSelecionado, mesSelecionado - i, 1);
+      double valorEmprestadoMes = 0.0;
+
+      final emprestimosMes = await appState.databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
+
+      for (final emprestimo in emprestimosMes) {
+        valorEmprestadoMes += emprestimo.valor;
+      }
+
+      tendenciaEmprestimos.add({
+        'mes': DateFormat('MMM').format(data),
+        'valor': valorEmprestadoMes,
+      });
+    }
+
     setState(() {
-      relatorio = dados;
+      relatorio = {
+        'totalEmprestado': totalEmprestado,
+        'totalRecebido': totalRecebido,
+        'lucro': lucro,
+        'pendente': totalEmprestado - totalRecebido,
+        'tendenciaEmprestimos': tendenciaEmprestimos,
+      };
     });
     _animationController.forward(from: 0.0);
   }
@@ -74,21 +119,39 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   children: [
                     _buildResumo(),
                     const SizedBox(height: 16),
-                    // _buildGraficoSection(
-                    //   title: 'Tendência de Empréstimos (Últimos 6 meses)',
-                    //   child: _buildGraficoDeLinha(relatorio!['tendenciaEmprestimos']),
-                    // ),
-                    // const SizedBox(height: 16),
-                    // _buildGraficoSection(
-                    //   title: 'Comparativo de Lucros Mensais',
-                    //   child: _buildGraficoDeBarras(),
-                    // ),
-                    // const SizedBox(height: 16),
                     _buildGraficoSection(
                       title: 'Recebido vs. Pendente',
                       child: _buildGraficoDePizza(),
                     ),
                     const SizedBox(height: 16),
+                    // Adicione o TextField para pesquisa aqui
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: TextField(
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por cliente...',
+                          hintStyle: TextStyle(color: Colors.white70),
+                          prefixIcon: Icon(Icons.search, color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.grey[850]?.withOpacity(0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (text) {
+                          setState(() {
+                            _searchText = text;
+                          });
+                          final appState = Provider.of<AppState>(context, listen: false);
+                          final emprestimosFiltrados = appState.emprestimosRecentes.where((emprestimo) {
+                            return emprestimo.nome.toLowerCase().contains(_searchText.toLowerCase());
+                          }).toList();
+                          _carregarRelatorio(emprestimosFiltrados: emprestimosFiltrados);
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -104,6 +167,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildResumo() {
+    // Use os valores do relatorio que agora são baseados na lista filtrada
     return Wrap(
       spacing: 8.0,
       runSpacing: 8.0,
@@ -352,7 +416,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Widget _buildListaDetalhada() {
     final appState = Provider.of<AppState>(context, listen: false);
-    final emprestimos = appState.emprestimosRecentes;
+    final emprestimos = appState.emprestimosRecentes.where((emprestimo) {
+      return emprestimo.nome.toLowerCase().contains(_searchText.toLowerCase());
+    }).toList();
 
     if (emprestimos.isEmpty) {
       return SliverToBoxAdapter(

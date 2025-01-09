@@ -67,6 +67,8 @@ class AppState extends ChangeNotifier {
     return _emprestimosRecentes.sublist(start, end);
   }
 
+  DatabaseHelper get databaseHelper => _databaseHelper;
+
   void nextPage() {
     if ((_currentPage + 1) * _itemsPerPage < _emprestimosRecentes.length) {
       _currentPage++;
