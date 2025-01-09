@@ -497,10 +497,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
-                    badgeWidget: _buildBadge(
-                      'R\$ ${NumberFormat.compact().format(recebido)}',
-                      Colors.green[900]!,
-                    ),
+                    // Removendo badgeWidget para não mostrar valores em reais
+                    badgeWidget: null,
                     badgePositionPercentageOffset: .98,
                   ),
                   PieChartSectionData(
@@ -513,10 +511,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
-                    badgeWidget: _buildBadge(
-                      'R\$ ${NumberFormat.compact().format(pendente)}',
-                      Colors.orange[900]!,
-                    ),
+                    // Removendo badgeWidget para não mostrar valores em reais
+                    badgeWidget: null,
                     badgePositionPercentageOffset: .98,
                   ),
                 ],
