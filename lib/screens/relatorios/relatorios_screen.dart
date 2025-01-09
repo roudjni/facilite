@@ -702,7 +702,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: Text(
-            '${DateFormat('MMM yyyy', 'pt_BR').format(DateTime(anoSelecionado, mesSelecionado))}',
+            '${DateFormat("MMMM 'de' yyyy", 'pt_BR').format(DateTime(anoSelecionado, mesSelecionado))}',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
