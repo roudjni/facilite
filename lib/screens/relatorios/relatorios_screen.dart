@@ -40,7 +40,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     _carregarPrevisao(); // Adicione esta linha para carregar a previsão ao iniciar a tela
   }
 
-  // Adicione este método para carregar a previsão e atualizar o estado
+  // Adicione este metodo para carregar a previsão e atualizar o estado
   Future<void> _carregarPrevisao() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final previsao = await appState.calcularPrevisaoRecebimentos(6); // Previsão para 6 meses

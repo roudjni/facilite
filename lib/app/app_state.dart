@@ -456,4 +456,43 @@ class AppState extends ChangeNotifier {
     return previsao;
   }
 
+  Future<Map<String, dynamic>> calcularInadimplenciaPorPeriodo(int mes, int ano) async {
+    final DateTime inicioMes = DateTime(ano, mes, 1);
+    final DateTime fimMes = DateTime(ano, mes + 1, 0);
+
+    double totalEmprestado = 0.0;
+    double totalDevido = 0.0;
+    double totalPago = 0.0;
+    double totalInadimplente = 0.0;
+
+    final List<Emprestimo> emprestimos = await _databaseHelper.getAllEmprestimos();
+
+    for (final emprestimo in emprestimos) {
+      for (final parcela in emprestimo.parcelasDetalhes) {
+        final DateTime dataVencimento = _dateFormat.parse(parcela['dataVencimento']);
+
+        // Considera apenas parcelas com vencimento dentro do período selecionado
+        if (dataVencimento.isAfter(inicioMes.subtract(Duration(days: 1))) &&
+            dataVencimento.isBefore(fimMes.add(Duration(days: 1)))) {
+          totalEmprestado += emprestimo.valor;
+          totalDevido += parcela['valor'];
+
+          if (parcela['status'] == 'Paga') {
+            totalPago += parcela['valor'];
+          } else if (dataVencimento.isBefore(DateTime.now())) {
+            totalInadimplente += parcela['valor'];
+          }
+        }
+      }
+    }
+
+    return {
+      'totalEmprestado': totalEmprestado,
+      'totalDevido': totalDevido,
+      'totalPago': totalPago,
+      'totalInadimplente': totalInadimplente,
+      'taxaInadimplencia': totalDevido > 0 ? (totalInadimplente / totalDevido) * 100 : 0.0,
+    };
+  }
+
 }
