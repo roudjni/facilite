@@ -4,6 +4,7 @@ import 'package:facilite/app/app_state.dart';
 import 'package:facilite/data/models/emprestimo.dart';
 import 'package:intl/intl.dart';
 import 'package:facilite/widgets/main_layout.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PagamentosScreen extends StatefulWidget {
   const PagamentosScreen({Key? key}) : super(key: key);
@@ -80,6 +81,10 @@ class _PagamentosScreenState extends State<PagamentosScreen> {
           (p) => p['status'] != 'Paga',
       orElse: () => {'numero': 0, 'valor': 0.0, 'dataVencimento': '', 'status': 'Indefinido'},
     );
+    final parcelasAtrasadas = parcelas.where((p) {
+      final vencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+      return vencimento.isBefore(DateTime.now()) && p['status'] != 'Paga';
+    }).toList();
 
     return Card(
       color: const Color(0xFF2D2D2D),
@@ -108,12 +113,78 @@ class _PagamentosScreenState extends State<PagamentosScreen> {
               ),
           ],
         ),
-        trailing: Icon(
-          _getStatusIcon(emprestimo),
-          color: _getStatusColor(emprestimo),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (parcelasAtrasadas.isNotEmpty || _deveEnviarLembrete(emprestimo))
+              IconButton(
+                icon: const Icon(Icons.sms_failed_outlined, color: Colors.green),
+                onPressed: () => _enviarLembreteWhatsApp(
+                    emprestimo,
+                    parcelasAtrasadas.isNotEmpty ? parcelasAtrasadas : [proximaParcela]),
+              ),
+            Icon(
+              _getStatusIcon(emprestimo),
+              color: _getStatusColor(emprestimo),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  bool _deveEnviarLembrete(Emprestimo emprestimo) {
+    if (!['Semanais', 'Quinzenais', 'Mensais'].contains(emprestimo.tipoParcela)) {
+      return false;
+    }
+
+    final parcelas = emprestimo.parcelasDetalhes;
+    final proximaParcela = parcelas.firstWhere(
+          (p) => p['status'] != 'Paga',
+      orElse: () => {'dataVencimento': ''},
+    );
+
+    if (proximaParcela['dataVencimento'].isEmpty) {
+      return false;
+    }
+
+    final vencimento = DateFormat('dd/MM/yyyy').parse(proximaParcela['dataVencimento']);
+    return vencimento.difference(DateTime.now()).inDays == 2;
+  }
+
+  Future<void> _enviarLembreteWhatsApp(Emprestimo emprestimo, List<Map<String, dynamic>> parcelas) async {
+    final numero = emprestimo.whatsapp.replaceAll(RegExp(r'[^\d]'), '');
+    if (numero.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Número de WhatsApp inválido!')),
+      );
+      return;
+    }
+
+    final mensagem = _gerarMensagemWhatsApp(emprestimo.nome, parcelas);
+
+    final url = "whatsapp://send?phone=55$numero&text=${Uri.encodeComponent(mensagem)}";
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir o WhatsApp!')),
+      );
+    }
+  }
+
+  String _gerarMensagemWhatsApp(String nome, List<Map<String, dynamic>> parcelas) {
+    String mensagem = "📢 *Lembrete de Pagamento* 📢\n\n"
+        "Olá, $nome. Aqui estão as informações sobre o seu próximo pagamento:\n\n";
+
+    for (var parcela in parcelas) {
+      mensagem += "🔹 Parcela ${parcela['numero']}:\n"
+          "   💰 Valor: R\$ ${parcela['valor'].toStringAsFixed(2)}\n"
+          "   📅 Vencimento: ${parcela['dataVencimento']}\n\n";
+    }
+
+    mensagem += "Por favor, garanta que o pagamento seja realizado a tempo. Obrigado!";
+    return mensagem;
   }
 
   List<Emprestimo> _filtrarPagamentos(List<Emprestimo> emprestimos) {
