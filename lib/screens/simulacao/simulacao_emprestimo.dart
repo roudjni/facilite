@@ -1,11 +1,11 @@
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/widgets/simulacao_form.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/widgets/simulacao_form.dart';
 import 'package:flutter/material.dart';
-import 'package:emprestafacil/app/app_state.dart';
+import 'package:facilite/app/app_state.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/widgets/main_layout.dart';
-import 'package:emprestafacil/widgets/shared/shared_widgets.dart';
-import 'package:emprestafacil/theme/app_theme.dart';
+import 'package:facilite/widgets/main_layout.dart';
+import 'package:facilite/widgets/shared/shared_widgets.dart';
+import 'package:facilite/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SimulacaoEmprestimoScreen extends StatefulWidget {

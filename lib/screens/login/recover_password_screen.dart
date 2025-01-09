@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/widgets/shared/shared_widgets.dart';
-import 'package:emprestafacil/data/services/auth_service.dart';
-import 'package:emprestafacil/data/models/usuario.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/widgets/shared/shared_widgets.dart';
+import 'package:facilite/data/services/auth_service.dart';
+import 'package:facilite/data/models/usuario.dart';
 
 class RecoverPasswordScreen extends StatefulWidget {
   @override

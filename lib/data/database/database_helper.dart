@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:bcrypt/bcrypt.dart';
-import 'package:emprestafacil/data/database/migrations.dart';
+import 'package:facilite/data/database/migrations.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:emprestafacil/data/models/usuario.dart';
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/data/models/usuario.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -20,7 +20,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'emprestafacil.db');
+    String path = join(await getDatabasesPath(), 'facilite.db');
     return await openDatabase(
       path,
       version: 8,

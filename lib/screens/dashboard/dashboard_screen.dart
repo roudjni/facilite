@@ -1,8 +1,8 @@
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/widgets/main_layout.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/widgets/main_layout.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {

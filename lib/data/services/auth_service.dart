@@ -1,6 +1,6 @@
 import 'package:bcrypt/bcrypt.dart';
-import 'package:emprestafacil/data/services/base_service.dart';
-import 'package:emprestafacil/data/models/usuario.dart';
+import 'package:facilite/data/services/base_service.dart';
+import 'package:facilite/data/models/usuario.dart';
 
 class AuthService extends BaseService {
   String _hashSenha(String senha) {

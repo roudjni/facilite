@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "emprestafacil.roudjni" "\0"
-            VALUE "FileDescription", "emprestafacil" "\0"
+            VALUE "CompanyName", "facilite.roudjni" "\0"
+            VALUE "FileDescription", "facilite" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "emprestafacil" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 emprestafacil.roudjni. All rights reserved." "\0"
-            VALUE "OriginalFilename", "emprestafacil.exe" "\0"
-            VALUE "ProductName", "emprestafacil" "\0"
+            VALUE "InternalName", "facilite" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 facilite.roudjni. Todos os direitos reservados." "\0"
+            VALUE "OriginalFilename", "facilite.exe" "\0"
+            VALUE "ProductName", "facilite" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

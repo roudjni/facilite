@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/widgets/simulacao_form.dart';
-import 'package:emprestafacil/widgets/shared/shared_widgets.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/widgets/simulacao_form.dart';
+import 'package:facilite/widgets/shared/shared_widgets.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class CriarEmprestimoScreen extends StatefulWidget {

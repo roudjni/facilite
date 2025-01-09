@@ -1,10 +1,10 @@
-import 'package:emprestafacil/utils/constants.dart';
+import 'package:facilite/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:emprestafacil/data/services/simulacao_service.dart';
+import 'package:facilite/data/services/simulacao_service.dart';
 import 'package:intl/intl.dart';
-import 'package:emprestafacil/data/database/database_helper.dart';
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/data/database/database_helper.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 
 class AppState extends ChangeNotifier {
   final SimulacaoService _simulacaoService = SimulacaoService();

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 import 'package:intl/intl.dart';
 
 Future<void> gerarPdfEmprestimo(Emprestimo emprestimo) async {
@@ -178,7 +178,7 @@ Future<void> gerarPdfEmprestimo(Emprestimo emprestimo) async {
   );
 
   // Diretório do usuário no Windows
-  final outputDir = Directory('${Platform.environment['USERPROFILE']}\\Documents\\Emprestafacil');
+  final outputDir = Directory('${Platform.environment['USERPROFILE']}\\Documents\\Facilite');
   if (!outputDir.existsSync()) {
     outputDir.createSync(recursive: true);
   }
@@ -433,7 +433,7 @@ Future<void> gerarContratoEmprestimo(Emprestimo emprestimo) async {
     ),
   );
 
-  final outputDir = Directory('${Platform.environment['USERPROFILE']}\\Documents\\Emprestafacil');
+  final outputDir = Directory('${Platform.environment['USERPROFILE']}\\Documents\\Facilite');
   if (!outputDir.existsSync()) {
     outputDir.createSync(recursive: true);
   }

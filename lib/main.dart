@@ -1,21 +1,21 @@
 // lib/main.dart
-import 'package:emprestafacil/data/models/emprestimo.dart';
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/screens/emprestimo/criar_emprestimo.dart';
-import 'package:emprestafacil/screens/emprestimo/detalhes_emprestimo_screen.dart';
-import 'package:emprestafacil/screens/emprestimo/emprestimos_screen.dart';
-import 'package:emprestafacil/screens/seguranca/seguranca_screen.dart';
+import 'package:facilite/data/models/emprestimo.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/screens/emprestimo/criar_emprestimo.dart';
+import 'package:facilite/screens/emprestimo/detalhes_emprestimo_screen.dart';
+import 'package:facilite/screens/emprestimo/emprestimos_screen.dart';
+import 'package:facilite/screens/seguranca/seguranca_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/screens/login/recover_password_screen.dart';
-import 'package:emprestafacil/screens/login/reset_password_screen.dart';
-import 'package:emprestafacil/screens/simulacao/simulacao_emprestimo.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/screens/login/recover_password_screen.dart';
+import 'package:facilite/screens/login/reset_password_screen.dart';
+import 'package:facilite/screens/simulacao/simulacao_emprestimo.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 import 'screens/login/login_screen.dart';
-import 'package:emprestafacil/screens/dashboard/dashboard_screen.dart';
-import 'package:emprestafacil/screens/emprestimo/editar_emprestimo_screen.dart';
+import 'package:facilite/screens/dashboard/dashboard_screen.dart';
+import 'package:facilite/screens/emprestimo/editar_emprestimo_screen.dart';
 
 void main() async {
   // Inicializar o Sqflite para ambientes de desktop
@@ -29,7 +29,7 @@ void main() async {
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1280, 720),
     center: true,
-    title: 'Emprestafácil',
+    title: 'Facilite+',
     titleBarStyle: TitleBarStyle.normal,
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Emprestafácil',
+      title: 'Facilite+',
       theme: ThemeData.dark().copyWith(
         primaryColor: Colors.blue,
         scaffoldBackgroundColor: Colors.black,

@@ -1,11 +1,11 @@
-import 'package:emprestafacil/screens/emprestimo/detalhes_emprestimo_screen.dart';
+import 'package:facilite/screens/emprestimo/detalhes_emprestimo_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/widgets/side_menu.dart';
-import 'package:emprestafacil/widgets/custom_appbar.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/widgets/side_menu.dart';
+import 'package:facilite/widgets/custom_appbar.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 
 class EmprestimosScreen extends StatefulWidget {
   @override

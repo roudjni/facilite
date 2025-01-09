@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
-import 'package:emprestafacil/widgets/shared/shared_widgets.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/data/models/emprestimo.dart';
+import 'package:facilite/widgets/shared/shared_widgets.dart';
 
 class EditarEmprestimoScreen extends StatefulWidget {
   final Emprestimo emprestimo;

@@ -1,6 +1,6 @@
-# emprestafacil
+# Facilite
 
-EmprestaFácil é um aplicativo simples e eficiente para gerenciar seus empréstimos. Com ele, você pode registrar, acompanhar e organizar todas as suas transações de forma prática e intuitiva. Controle prazos, valores e pagamentos, tudo em um só lugar, com facilidade e rapidez. Ideal para quem precisa de uma solução descomplicada para manter suas finanças em dia.
+Facilite+ é um aplicativo simples e eficiente para gerenciar seus empréstimos. Com ele, você pode registrar, acompanhar e organizar todas as suas transações de forma prática e intuitiva. Controle prazos, valores e pagamentos, tudo em um só lugar, com facilidade e rapidez. Ideal para quem precisa de uma solução descomplicada para manter suas finanças em dia.
 
 ## Sobre o Facilite
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   // Textos padrões
-  static const String appTitle = 'Emprestafácil';
+  static const String appTitle = 'Facilite+';
   static const String adminUser = 'admin';
   static const String defaultUserName = 'Usuário';
   static const String defaultErrorMessage = 'Ocorreu um erro inesperado.';

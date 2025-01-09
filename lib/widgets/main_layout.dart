@@ -1,8 +1,8 @@
 // lib/widgets/main_layout.dart
 
 import 'package:flutter/material.dart';
-import 'package:emprestafacil/widgets/custom_appbar.dart';
-import 'package:emprestafacil/widgets/side_menu.dart';
+import 'package:facilite/widgets/custom_appbar.dart';
+import 'package:facilite/widgets/side_menu.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;

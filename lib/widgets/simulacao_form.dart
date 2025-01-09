@@ -1,8 +1,8 @@
 // lib/widgets/emprestimo/simulacao_form.dart
-import 'package:emprestafacil/app/app_state.dart';
-import 'package:emprestafacil/data/models/simulacao.dart';
-import 'package:emprestafacil/theme/app_theme.dart';
-import 'package:emprestafacil/widgets/shared/shared_widgets.dart';
+import 'package:facilite/app/app_state.dart';
+import 'package:facilite/data/models/simulacao.dart';
+import 'package:facilite/theme/app_theme.dart';
+import 'package:facilite/widgets/shared/shared_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:emprestafacil/data/models/emprestimo.dart';
+import 'package:facilite/data/models/emprestimo.dart';
 import 'package:intl/intl.dart';
 
 class LoanCard extends StatelessWidget {

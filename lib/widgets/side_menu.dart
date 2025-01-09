@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:emprestafacil/app/app_state.dart';
+import 'package:facilite/app/app_state.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({Key? key}) : super(key: key);
@@ -122,11 +122,11 @@ class SideMenu extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Empresta Fácil',
+              Text(
+                'Facilite+',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
