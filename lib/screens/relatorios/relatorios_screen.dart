@@ -40,13 +40,14 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
 
-    // Inicializando mesAnterior e anoAnterior
     mesAnterior = mesSelecionado;
     anoAnterior = anoSelecionado;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarRelatorio();
-      // Removendo _carregarPrevisao() do initState()
+      if (!_previsaoCarregada) {
+        _carregarPrevisao();
+      }
     });
   }
 
