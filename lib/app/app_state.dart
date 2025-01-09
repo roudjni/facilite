@@ -362,7 +362,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Metodo para comparar listas de Emprestimo (adaptado para Emprestimo)
   bool _listsAreEqualEmprestimo(List<Emprestimo> list1, List<Emprestimo> list2) {
     if (list1.length != list2.length) {
       return false;
@@ -374,4 +373,30 @@ class AppState extends ChangeNotifier {
     }
     return true;
   }
+
+  Future<Map<String, dynamic>> calcularRelatorioMensal(int mes, int ano) async {
+    final emprestimos = await _databaseHelper.getEmprestimosPorMesEAno(mes, ano);
+
+    double totalEmprestado = 0.0;
+    double totalRecebido = 0.0;
+    double lucro = 0.0;
+
+    for (final emprestimo in emprestimos) {
+      totalEmprestado += emprestimo.valor;
+      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
+      final recebido = emprestimo.parcelasDetalhes
+          .where((p) => p['status'] == 'Paga')
+          .fold(0.0, (sum, p) => sum + p['valor']);
+      totalRecebido += recebido;
+      lucro += recebido - emprestimo.valor;
+    }
+
+    return {
+      'totalEmprestado': totalEmprestado,
+      'totalRecebido': totalRecebido,
+      'lucro': lucro,
+      'pendente': totalEmprestado - totalRecebido,
+    };
+  }
+
 }
