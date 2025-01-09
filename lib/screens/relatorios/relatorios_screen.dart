@@ -100,7 +100,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
     double lucroEsperado = 0.0;
-    double pendente = 0.0; // Variável para calcular o valor pendente corretamente
+    double pendente = 0.0; // Variável para calcular o valor pendente do mês
 
     for (final emprestimo in emprestimos) {
       totalEmprestado += emprestimo.valor;
@@ -111,11 +111,21 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       totalRecebido += recebido;
       lucroEsperado += valorTotal - emprestimo.valor;
 
-      // Cálculo do valor pendente para o cliente filtrado ou para o período
-      if (emprestimosFiltrados != null && emprestimosFiltrados.contains(emprestimo)) {
-        pendente += valorTotal - recebido; // Valor total a receber - valor já recebido
-      } else if (emprestimosFiltrados == null) {
-        pendente += valorTotal - recebido; // Para o relatório geral, soma o pendente de todos
+      // Cálculo do valor pendente para o mês selecionado
+      if (mesSelecionado != TODOS_OS_MESES) {
+        final parcelasPendentesMes = emprestimo.parcelasDetalhes.where((p) {
+          if (p['status'] == 'Paga') return false; // Já foi paga, não está pendente
+
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+          return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+        });
+
+        for (final parcela in parcelasPendentesMes) {
+          pendente += parcela['valor'];
+        }
+      } else {
+        // No caso de "Todos os Meses", mantém o cálculo do pendente total
+        pendente += valorTotal - recebido;
       }
     }
 
@@ -143,7 +153,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         'totalEmprestado': totalEmprestado,
         'totalRecebido': totalRecebido,
         'lucro': lucroEsperado,
-        'pendente': pendente, // Usando a variável 'pendente' calculada corretamente
+        'pendente': pendente, // Agora calcula o pendente do mês ou o total
         'tendenciaEmprestimos': tendenciaEmprestimos,
       };
       _animationController.forward(from: 0.0);
