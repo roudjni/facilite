@@ -92,7 +92,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Future<void> _carregarRelatorio({List<Emprestimo>? emprestimosFiltrados}) async {
     final appState = Provider.of<AppState>(context, listen: false);
 
-    // Obter todos os empréstimos, independentemente do período, se a opção "Todos" for selecionada
     final List<Emprestimo> emprestimos = emprestimosFiltrados ??
         (mesSelecionado == TODOS_OS_MESES
             ? await appState.databaseHelper.getAllEmprestimos()
@@ -101,18 +100,25 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
     double lucroEsperado = 0.0;
+    double pendente = 0.0; // Variável para calcular o valor pendente corretamente
 
     for (final emprestimo in emprestimos) {
       totalEmprestado += emprestimo.valor;
-      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100); // Valor total a ser recebido
+      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
       final recebido = emprestimo.parcelasDetalhes
           .where((p) => p['status'] == 'Paga')
           .fold(0.0, (sum, p) => sum + p['valor']);
       totalRecebido += recebido;
-      lucroEsperado += valorTotal - emprestimo.valor; // Lucro esperado: valor total - valor emprestado
+      lucroEsperado += valorTotal - emprestimo.valor;
+
+      // Cálculo do valor pendente para o cliente filtrado ou para o período
+      if (emprestimosFiltrados != null && emprestimosFiltrados.contains(emprestimo)) {
+        pendente += valorTotal - recebido; // Valor total a receber - valor já recebido
+      } else if (emprestimosFiltrados == null) {
+        pendente += valorTotal - recebido; // Para o relatório geral, soma o pendente de todos
+      }
     }
 
-    // Tendência de empréstimos (pode ser adaptado para a visualização geral, se necessário)
     List<Map<String, dynamic>> tendenciaEmprestimos = [];
     if (mesSelecionado != TODOS_OS_MESES) {
       for (int i = 5; i >= 0; i--) {
@@ -136,8 +142,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       relatorio = {
         'totalEmprestado': totalEmprestado,
         'totalRecebido': totalRecebido,
-        'lucro': lucroEsperado, // Usando lucroEsperado
-        'pendente': totalEmprestado - totalRecebido,
+        'lucro': lucroEsperado,
+        'pendente': pendente, // Usando a variável 'pendente' calculada corretamente
         'tendenciaEmprestimos': tendenciaEmprestimos,
       };
       _animationController.forward(from: 0.0);
@@ -547,24 +553,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );
