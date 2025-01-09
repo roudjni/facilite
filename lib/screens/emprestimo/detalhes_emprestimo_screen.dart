@@ -844,13 +844,6 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
               ],
             ),
           ),
-
-          // Summary cards
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: _buildParcelasSummary(),
-          ),
-
           // Parcelas list
           _buildParcelasList(),
         ],
@@ -885,44 +878,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
     );
   }
 
-  Widget _buildParcelasSummary() {
-    final parcelasDetalhes = widget.emprestimo.parcelasDetalhes;
-    final totalParcelas = parcelasDetalhes.length;
-    final parcelasPagas = parcelasDetalhes.where((p) => p['status'] == 'Paga').length;
-    final parcelasAtrasadas = parcelasDetalhes.where((p) {
-      final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
-      return DateTime.now().isAfter(dataVencimento) && p['status'] != 'Paga';
-    }).length;
-    final parcelasNoPrazo = totalParcelas - parcelasPagas - parcelasAtrasadas;
 
-    return Row(
-      children: [
-        _buildSummaryCard(
-          'Pagas',
-          parcelasPagas,
-          totalParcelas,
-          Colors.green,
-          Icons.check_circle,
-        ),
-        const SizedBox(width: 12),
-        _buildSummaryCard(
-          'No Prazo',
-          parcelasNoPrazo,
-          totalParcelas,
-          Colors.blue,
-          Icons.schedule,
-        ),
-        const SizedBox(width: 12),
-        _buildSummaryCard(
-          'Atrasadas',
-          parcelasAtrasadas,
-          totalParcelas,
-          Colors.red,
-          Icons.warning,
-        ),
-      ],
-    );
-  }
 
   Widget _buildSummaryCard(
       String label,

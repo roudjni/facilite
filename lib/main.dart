@@ -4,6 +4,7 @@ import 'package:facilite/data/models/simulacao.dart';
 import 'package:facilite/screens/emprestimo/criar_emprestimo.dart';
 import 'package:facilite/screens/emprestimo/detalhes_emprestimo_screen.dart';
 import 'package:facilite/screens/emprestimo/emprestimos_screen.dart';
+import 'package:facilite/screens/pagamentos/pagamentos_screen.dart';
 import 'package:facilite/screens/seguranca/seguranca_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -123,11 +124,12 @@ class MyApp extends StatelessWidget {
       },
       routes: {
         '/dashboard': (context) => DashboardScreen(),
+        '/pagamentos': (context) => const PagamentosScreen(),
         '/recover-password': (context) => RecoverPasswordScreen(),
         '/reset-password': (context) => ResetPasswordScreen(),
         '/login': (context) => LoginScreen(),
         '/loans': (context) => EmprestimosScreen(),
-        '/seguranca': (context) => SegurancaScreen(),
+        '/seguranca': (context) => const SegurancaScreen(),
       },
     );
   }
