@@ -380,6 +380,24 @@ class AppState extends ChangeNotifier {
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
     double lucro = 0.0;
+    List<Map<String, dynamic>> tendenciaEmprestimos = [];
+
+    // Calcular tendência de empréstimos para os últimos 6 meses
+    for (int i = 5; i >= 0; i--) {
+      DateTime data = DateTime(ano, mes - i, 1);
+      double valorEmprestadoMes = 0.0;
+
+      final emprestimosMes = await _databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
+
+      for (final emprestimo in emprestimosMes) {
+        valorEmprestadoMes += emprestimo.valor;
+      }
+
+      tendenciaEmprestimos.add({
+        'mes': DateFormat('MMM').format(data), // Formato 'Jan', 'Fev', etc.
+        'valor': valorEmprestadoMes,
+      });
+    }
 
     for (final emprestimo in emprestimos) {
       totalEmprestado += emprestimo.valor;
@@ -396,6 +414,7 @@ class AppState extends ChangeNotifier {
       'totalRecebido': totalRecebido,
       'lucro': lucro,
       'pendente': totalEmprestado - totalRecebido,
+      'tendenciaEmprestimos': tendenciaEmprestimos,
     };
   }
 

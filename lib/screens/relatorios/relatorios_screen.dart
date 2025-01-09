@@ -71,6 +71,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                     _buildResumo(),
                     const SizedBox(height: 16),
                     _buildGraficoSection(
+                      title: 'Tendência de Empréstimos (Últimos 6 meses)',
+                      child: _buildGraficoDeLinha(relatorio!['tendenciaEmprestimos']),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGraficoSection(
                       title: 'Comparativo de Lucros Mensais',
                       child: _buildGraficoDeBarras(),
                     ),
@@ -588,6 +593,99 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGraficoDeLinha(List<Map<String, dynamic>> tendenciaEmprestimos) {
+    return SizedBox(
+      height: 200,
+      child: LineChart(
+        LineChartData(
+          lineBarsData: [
+            LineChartBarData(
+              spots: tendenciaEmprestimos.asMap().entries.map((entry) {
+                return FlSpot(entry.key.toDouble(), entry.value['valor'] / 1000); // Dividir por 1000 para simplificar a escala
+              }).toList(),
+              isCurved: true,
+              gradient: LinearGradient(
+                colors: [Colors.blue[300]!, Colors.blue[700]!],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
+              barWidth: 3,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  colors: [Colors.blue[300]!.withOpacity(0.3), Colors.blue[700]!.withOpacity(0.3)],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+              ),
+            ),
+          ],
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      tendenciaEmprestimos[value.toInt()]['mes'],
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 36,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value}K', // Formato '1K', '2K', etc.
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  );
+                },
+              ),
+            ),
+            rightTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 1000,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: Colors.white.withOpacity(0.2),
+                strokeWidth: 1,
+              );
+            },
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          backgroundColor: Colors.transparent,
         ),
       ),
     );
