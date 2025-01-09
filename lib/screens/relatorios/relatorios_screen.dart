@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
@@ -18,6 +19,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Map<String, dynamic>? relatorio;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  double _zoomLevel = 1.0;
+  double _initialRadius = 50.0;
+  bool _isZooming = false;
 
   @override
   void initState() {
@@ -217,84 +221,90 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     );
   }
 
-
   Widget _buildGraficoDePizza() {
     final recebido = relatorio!['totalRecebido'];
     final pendente = relatorio!['pendente'];
     final total = recebido + pendente;
 
-    return SizedBox(
-      height: 200,
-      child: Stack(
-        children: [
-          PieChart(
-            PieChartData(
-              pieTouchData: PieTouchData(
-                touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                  setState(() {
-                    if (!event.isInterestedForInteractions ||
-                        pieTouchResponse == null ||
-                        pieTouchResponse.touchedSection == null) {
-                      return;
-                    }
-                  });
-                },
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _zoomLevel = _zoomLevel == 1.0 ? 1.5 : 1.0;
+        });
+      },
+      child: SizedBox(
+        height: 200,
+        child: Stack(
+          children: [
+            PieChart(
+              PieChartData(
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        return;
+                      }
+                    });
+                  },
+                ),
+                sections: [
+                  PieChartSectionData(
+                    value: recebido,
+                    color: Colors.green[400],
+                    title: '${((recebido / total) * 100).toStringAsFixed(1)}%',
+                    radius: _initialRadius * _zoomLevel,
+                    titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    badgeWidget: _buildBadge(
+                      'R\$ ${NumberFormat.compact().format(recebido)}',
+                      Colors.green[900]!,
+                    ),
+                    badgePositionPercentageOffset: .98,
+                  ),
+                  PieChartSectionData(
+                    value: pendente,
+                    color: Colors.orange[400],
+                    title: '${((pendente / total) * 100).toStringAsFixed(1)}%',
+                    radius: _initialRadius * _zoomLevel,
+                    titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    badgeWidget: _buildBadge(
+                      'R\$ ${NumberFormat.compact().format(pendente)}',
+                      Colors.orange[900]!,
+                    ),
+                    badgePositionPercentageOffset: .98,
+                  ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 30 * _zoomLevel,
+                borderData: FlBorderData(show: false),
               ),
-              sections: [
-                PieChartSectionData(
-                  value: recebido,
-                  color: Colors.green[400],
-                  title: '${((recebido / total) * 100).toStringAsFixed(1)}%',
-                  radius: 50,
-                  titleStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  badgeWidget: _buildBadge(
-                    'R\$ ${NumberFormat.compact().format(recebido)}',
-                    Colors.green[900]!,
-                  ),
-                  badgePositionPercentageOffset: .98,
-                ),
-                PieChartSectionData(
-                  value: pendente,
-                  color: Colors.orange[400],
-                  title: '${((pendente / total) * 100).toStringAsFixed(1)}%',
-                  radius: 50,
-                  titleStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  badgeWidget: _buildBadge(
-                    'R\$ ${NumberFormat.compact().format(pendente)}',
-                    Colors.orange[900]!,
-                  ),
-                  badgePositionPercentageOffset: .98,
-                ),
-              ],
-              sectionsSpace: 2,
-              centerSpaceRadius: 30,
-              borderData: FlBorderData(show: false),
             ),
-          ),
-          Positioned.fill(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLegendaItem('Recebido', Colors.green[400]!),
-                    const SizedBox(width: 16),
-                    _buildLegendaItem('Pendente', Colors.orange[400]!),
-                  ],
-                ),
-              ],
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendaItem('Recebido', Colors.green[400]!),
+                      const SizedBox(width: 16),
+                      _buildLegendaItem('Pendente', Colors.orange[400]!),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
