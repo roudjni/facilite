@@ -16,6 +16,8 @@ class RelatoriosScreen extends StatefulWidget {
 class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerProviderStateMixin {
   int mesSelecionado = DateTime.now().month;
   int anoSelecionado = DateTime.now().year;
+  int? mesAnterior;
+  int? anoAnterior;
   Map<String, dynamic>? relatorio;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -36,14 +38,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
 
+    // Inicializando mesAnterior e anoAnterior
+    mesAnterior = mesSelecionado;
+    anoAnterior = anoSelecionado;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarRelatorio();
-      _carregarPrevisao();
+      // Removendo _carregarPrevisao() do initState()
     });
   }
 
   Future<void> _carregarPrevisao() async {
-    if (_previsaoCarregada) return;
+    // Só carrega a previsão se ainda não estiver carregada ou se houver mudanças
+    if (_previsaoCarregada && mesAnterior == mesSelecionado && anoAnterior == anoSelecionado) return;
 
     setState(() {
       _isLoadingPrevisao = true;
@@ -56,6 +63,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       setState(() {
         _previsaoRecebimentos = previsao;
         _previsaoCarregada = true;
+        // Atualizando mesAnterior e anoAnterior após o carregamento
+        mesAnterior = mesSelecionado;
+        anoAnterior = anoSelecionado;
       });
     } catch (e) {
       print("Erro ao carregar previsão: $e");
@@ -774,18 +784,41 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildFiltroMesAno() {
-    return IconButton(
-      icon: const Icon(Icons.calendar_today, color: Colors.white70),
-      onPressed: () async {
-        final filtro = await _mostrarFiltroMesAno();
-        if (filtro != null) {
-          setState(() {
-            mesSelecionado = filtro['mes']!;
-            anoSelecionado = filtro['ano']!;
-          });
-          await _carregarRelatorio();
-        }
-      },
+    return Row(
+      children: [
+        // Exibindo o nome do mês e ano selecionados
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Text(
+            '${DateFormat('MMM yyyy', 'pt_BR').format(DateTime(anoSelecionado, mesSelecionado))}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.calendar_today, color: Colors.white70),
+          onPressed: () async {
+            final filtro = await _mostrarFiltroMesAno();
+            if (filtro != null) {
+              setState(() {
+                mesSelecionado = filtro['mes']!;
+                anoSelecionado = filtro['ano']!;
+              });
+              await _carregarRelatorio();
+              await _carregarPrevisao();
+            }
+          },
+        ),
+        // Novo ícone para atualizar a previsão
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white70),
+          onPressed: () {
+            _carregarPrevisao();
+          },
+        ),
+      ],
     );
   }
 
