@@ -30,6 +30,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   String? _erroPrevisao;
   int _indiceInicialPrevisao = 0; // Variável para controlar o índice inicial da previsão
   final int _mesesExibidos = 4; // Número de meses exibidos na previsão
+  static const int TODOS_OS_MESES = 0; // Valor especial para representar a opção "Todos"
 
   @override
   void initState() {
@@ -91,8 +92,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Future<void> _carregarRelatorio({List<Emprestimo>? emprestimosFiltrados}) async {
     final appState = Provider.of<AppState>(context, listen: false);
 
+    // Obter todos os empréstimos, independentemente do período, se a opção "Todos" for selecionada
     final List<Emprestimo> emprestimos = emprestimosFiltrados ??
-        await appState.databaseHelper.getEmprestimosPorMesEAno(mesSelecionado, anoSelecionado);
+        (mesSelecionado == TODOS_OS_MESES
+            ? await appState.databaseHelper.getAllEmprestimos()
+            : await appState.databaseHelper.getEmprestimosPorMesEAno(mesSelecionado, anoSelecionado));
 
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
@@ -108,21 +112,24 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       lucro += recebido - emprestimo.valor;
     }
 
+    // Tendência de empréstimos (pode ser adaptado para a visualização geral, se necessário)
     List<Map<String, dynamic>> tendenciaEmprestimos = [];
-    for (int i = 5; i >= 0; i--) {
-      DateTime data = DateTime(anoSelecionado, mesSelecionado - i, 1);
-      double valorEmprestadoMes = 0.0;
+    if (mesSelecionado != TODOS_OS_MESES) {
+      for (int i = 5; i >= 0; i--) {
+        DateTime data = DateTime(anoSelecionado, mesSelecionado - i, 1);
+        double valorEmprestadoMes = 0.0;
 
-      final emprestimosMes = await appState.databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
+        final emprestimosMes = await appState.databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
 
-      for (final emprestimo in emprestimosMes) {
-        valorEmprestadoMes += emprestimo.valor;
+        for (final emprestimo in emprestimosMes) {
+          valorEmprestadoMes += emprestimo.valor;
+        }
+
+        tendenciaEmprestimos.add({
+          'mes': DateFormat('MMM').format(data),
+          'valor': valorEmprestadoMes,
+        });
       }
-
-      tendenciaEmprestimos.add({
-        'mes': DateFormat('MMM').format(data),
-        'valor': valorEmprestadoMes,
-      });
     }
 
     setState(() {
@@ -459,6 +466,11 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildGraficoDePizza() {
+    // Ocultar o gráfico de pizza se a opção "Todos" for selecionada
+    if (mesSelecionado == TODOS_OS_MESES) {
+      return const SizedBox.shrink();
+    }
+
     final recebido = relatorio!['totalRecebido'];
     final pendente = relatorio!['pendente'];
     final total = recebido + pendente;
@@ -497,7 +509,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
-                    // Removendo badgeWidget para não mostrar valores em reais
                     badgeWidget: null,
                     badgePositionPercentageOffset: .98,
                   ),
@@ -511,7 +522,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
-                    // Removendo badgeWidget para não mostrar valores em reais
                     badgeWidget: null,
                     badgePositionPercentageOffset: .98,
                   ),
@@ -694,11 +704,13 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Widget _buildFiltroMesAno() {
     return Row(
       children: [
-        // Exibindo o nome do mês e ano selecionados
         Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: Text(
-            '${DateFormat("MMMM 'de' yyyy", 'pt_BR').format(DateTime(anoSelecionado, mesSelecionado))}',
+            // Exibir "Todos os Meses" se a opção "Todos" for selecionada
+            mesSelecionado == TODOS_OS_MESES
+                ? 'Todos os Meses'
+                : '${DateFormat("MMMM 'de' yyyy", 'pt_BR').format(DateTime(anoSelecionado, mesSelecionado))}',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -719,7 +731,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
             }
           },
         ),
-        // Novo ícone para atualizar a previsão
         IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white70),
           onPressed: () {
@@ -732,7 +743,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Future<Map<String, int>?> _mostrarFiltroMesAno() async {
     final meses = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
     int mes = mesSelecionado;
@@ -775,9 +786,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   style: const TextStyle(color: Colors.white),
                   underline: const SizedBox(),
                   items: List.generate(
-                    12,
+                    meses.length,
                         (index) => DropdownMenuItem(
-                      value: index + 1,
+                      value: index, // Opção "Todos" tem valor 0
                       child: Text(meses[index]),
                     ),
                   ),
