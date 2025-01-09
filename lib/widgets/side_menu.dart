@@ -56,6 +56,13 @@ class SideMenu extends StatelessWidget {
                       context: context,
                       color: Colors.teal,
                     ),
+                    _buildMenuItem( // novo menu
+                      icon: Icons.money_off_outlined,
+                      label: 'Inadimplência',
+                      route: '/inadimplencia',
+                      context: context,
+                      color: Colors.deepOrange,
+                    ),
                     const SizedBox(height: 24),
                     _buildSectionTitle('Sistema'),
                     _buildMenuItem(

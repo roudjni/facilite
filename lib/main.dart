@@ -19,6 +19,7 @@ import 'screens/login/login_screen.dart';
 import 'package:facilite/screens/dashboard/dashboard_screen.dart';
 import 'package:facilite/screens/emprestimo/editar_emprestimo_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:facilite/screens/inadimplencia/inadimplencia_screen.dart'; // Importe o novo arquivo
 
 void main() async {
   // Inicialize a formatação para português do Brasil
@@ -135,6 +136,7 @@ class MyApp extends StatelessWidget {
         '/loans': (context) => EmprestimosScreen(),
         '/seguranca': (context) => const SegurancaScreen(),
         '/relatorios': (context) => const RelatoriosScreen(),
+        '/inadimplencia': (context) => const InadimplenciaScreen(),
       },
     );
   }
