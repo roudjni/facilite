@@ -23,7 +23,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   double _zoomLevel = 1.0;
   double _initialRadius = 50.0;
   String _searchText = '';
-
+  // Adicione uma variável para armazenar a previsão de recebimentos
+  List<Map<String, dynamic>> _previsaoRecebimentos = [];
 
   @override
   void initState() {
@@ -36,6 +37,16 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _carregarRelatorio();
+    _carregarPrevisao(); // Adicione esta linha para carregar a previsão ao iniciar a tela
+  }
+
+  // Adicione este método para carregar a previsão e atualizar o estado
+  Future<void> _carregarPrevisao() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final previsao = await appState.calcularPrevisaoRecebimentos(6); // Previsão para 6 meses
+    setState(() {
+      _previsaoRecebimentos = previsao;
+    });
   }
 
   @override
@@ -124,7 +135,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       child: _buildGraficoDePizza(),
                     ),
                     const SizedBox(height: 16),
-                    // Adicione o TextField para pesquisa aqui
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: TextField(
@@ -152,6 +162,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                         },
                       ),
                     ),
+                    // Adicione a seção de previsão de recebimentos aqui
+                    _buildPrevisaoRecebimentos(),
                   ],
                 ),
               ),
@@ -163,6 +175,57 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPrevisaoRecebimentos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Previsão de Recebimentos Futuros',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FutureBuilder<List<Map<String, dynamic>>>(
+          future: Provider.of<AppState>(context, listen: false).calcularPrevisaoRecebimentos(6),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+              );
+            } else if (snapshot.hasError) {
+              return const Text('Erro ao carregar a previsão', style: TextStyle(color: Colors.red));
+            } else if (snapshot.hasData) {
+              _previsaoRecebimentos = snapshot.data!;
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _previsaoRecebimentos.length,
+                itemBuilder: (context, index) {
+                  final item = _previsaoRecebimentos[index];
+                  return ListTile(
+                    title: Text(
+                      item['mes'],
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    trailing: Text(
+                      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(item['valor']),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -652,5 +715,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       ),
     );
   }
+
+
 
 }

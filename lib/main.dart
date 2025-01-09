@@ -18,8 +18,11 @@ import 'package:window_manager/window_manager.dart';
 import 'screens/login/login_screen.dart';
 import 'package:facilite/screens/dashboard/dashboard_screen.dart';
 import 'package:facilite/screens/emprestimo/editar_emprestimo_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
+  // Inicialize a formatação para português do Brasil
+  await initializeDateFormatting('pt_BR', null);
   // Inicializar o Sqflite para ambientes de desktop
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;

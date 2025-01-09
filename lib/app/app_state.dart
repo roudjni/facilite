@@ -420,4 +420,40 @@ class AppState extends ChangeNotifier {
     };
   }
 
+  Future<List<Map<String, dynamic>>> calcularPrevisaoRecebimentos(int meses) async {
+    final List<Map<String, dynamic>> previsao = [];
+    final DateTime hoje = DateTime.now();
+
+    for (int i = 0; i < meses; i++) {
+      final DateTime inicioMes = DateTime(hoje.year, hoje.month + i, 1);
+      final DateTime fimMes = DateTime(hoje.year, hoje.month + i + 1, 0);
+
+      final String inicioMesFormatado = _dateFormat.format(inicioMes);
+      final String fimMesFormatado = _dateFormat.format(fimMes);
+
+      double totalReceberMes = 0.0;
+
+      final List<Emprestimo> emprestimos = await _databaseHelper.getAllEmprestimos();
+
+      for (final emprestimo in emprestimos) {
+        for (final parcela in emprestimo.parcelasDetalhes) {
+          if (parcela['status'] != 'Paga') {
+            final DateTime dataVencimento = _dateFormat.parse(parcela['dataVencimento']);
+            if (dataVencimento.isAfter(inicioMes.subtract(Duration(days: 1))) &&
+                dataVencimento.isBefore(fimMes.add(Duration(days: 1)))) {
+              totalReceberMes += parcela['valor'];
+            }
+          }
+        }
+      }
+
+      previsao.add({
+        'mes': DateFormat('MMM/yyyy', 'pt_BR').format(inicioMes),
+        'valor': totalReceberMes,
+      });
+    }
+
+    return previsao;
+  }
+
 }
