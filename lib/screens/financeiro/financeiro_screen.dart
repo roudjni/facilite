@@ -19,7 +19,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _totalPendente = 0.0;
   double _saldoAtual = 0.0;
   double _lucroMesAnterior = 0.0;
-  List<Map<String, dynamic>> _previsaoRecebimentos = [];
 
   @override
   void initState() {
@@ -33,8 +32,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
     final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
     final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month -1 , now.year);
-    final previsao = await appState.calcularPrevisaoRecebimentos(6);
-
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -42,7 +39,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       _lucroTotal = dadosFinanceiro['lucro'] ?? 0.0;
       _totalPendente = dadosFinanceiro['pendente'] ?? 0.0;
       _saldoAtual = _totalRecebido - (_totalEmprestado - _totalPendente);
-      _previsaoRecebimentos = previsao;
       _lucroMesAnterior = dadosFinanceiroAnterior['lucro'] ?? 0.0;
       _isLoading = false;
     });
@@ -62,55 +58,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Resumo Financeiro',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildResumoCard(
-                    'Total Emprestado',
-                    appState.numberFormat.format(_totalEmprestado),
-                    Icons.monetization_on,
-                    Colors.blue,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildResumoCard(
-                    'Total a Receber',
-                    appState.numberFormat.format(_totalPendente),
-                    Icons.attach_money,
-                    Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildResumoCard(
-                    'Total Recebido',
-                    appState.numberFormat.format(_totalRecebido),
-                    Icons.check_circle,
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildResumoCard(
-                    'Lucro Total',
-                    appState.numberFormat.format(_lucroTotal),
-                    Icons.trending_up,
-                    Colors.lime,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text(
               'Análise de Fluxo de Caixa',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
@@ -126,30 +73,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               'Lucro Atual x Anterior',
               appState.numberFormat.format(_lucroTotal),
               appState.numberFormat.format(_lucroMesAnterior),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Previsão de Recebimentos (Próximos Meses)',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 150, // Defina uma altura fixa ou ajuste conforme necessário
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _previsaoRecebimentos.length,
-                itemBuilder: (context, index) {
-                  final previsao = _previsaoRecebimentos[index];
-                  return  Container(
-                    width: 150,
-                    margin: const EdgeInsets.only(right: 16),
-                    child:  _buildPrevisaoCard(
-                      previsao['mes'],
-                      appState.numberFormat.format(previsao['valor']),
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),
