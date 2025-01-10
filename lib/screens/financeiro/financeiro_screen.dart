@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/main_layout.dart';
-import 'package:intl/intl.dart';
 
 class FinanceiroScreen extends StatefulWidget {
   const FinanceiroScreen({Key? key}) : super(key: key);
@@ -31,7 +30,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final now = DateTime.now();
 
     final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
-    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month -1 , now.year);
+    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month - 1 , now.year);
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -62,17 +61,27 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildResumoCard(
-              'Saldo Atual',
-              appState.numberFormat.format(_saldoAtual),
-              Icons.account_balance,
-              Colors.cyan,
-            ),
-            const SizedBox(height: 16),
-            _buildLucroComparativoCard(
-              'Lucro Atual x Anterior',
-              appState.numberFormat.format(_lucroTotal),
-              appState.numberFormat.format(_lucroMesAnterior),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    context,
+                    'Saldo Atual',
+                    appState.numberFormat.format(_saldoAtual),
+                    Icons.account_balance,
+                    Colors.cyan,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child:  _buildLucroComparativoCard(
+                    context,
+                    'Lucro Atual x Anterior',
+                    appState.numberFormat.format(_lucroTotal),
+                    appState.numberFormat.format(_lucroMesAnterior),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -80,9 +89,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildLucroComparativoCard(String title, String valorAtual, String valorAnterior) {
+  Widget _buildLucroComparativoCard(BuildContext context,String title, String valorAtual, String valorAnterior) {
     final appState = Provider.of<AppState>(context, listen: false);
-
     String cleanedValorAnterior = valorAnterior.replaceAll(RegExp(r'[^\d.-]'), '').trim();
     String cleanedValorAtual = valorAtual.replaceAll(RegExp(r'[^\d.-]'), '').trim();
 
@@ -94,126 +102,105 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         ? (diferenca / parsedValorAnterior) * 100
         : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                appState.numberFormat.format(parsedValorAtual),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: diferenca > 0 ? Colors.green : Colors.red,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Mês Anterior: ${appState.numberFormat.format(parsedValorAnterior)}',
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResumoCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrevisaoCard(String mes, String valor) {
-    return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color:  Colors.grey[800],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child:  Padding(
+        padding: const EdgeInsets.all(16),
         child:  Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              mes,
+              title,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  appState.numberFormat.format(parsedValorAtual),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color:  diferenca > 0 ? Colors.green : Colors.red,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
-              valor,
+              'Mês Anterior: ${appState.numberFormat.format(parsedValorAnterior)}',
               style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16
+                fontSize: 14,
+                color: Colors.white70,
               ),
             ),
           ],
-        )
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color) {
+    return  Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child:  Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
