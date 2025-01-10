@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:facilite/data/models/emprestimo.dart';
 import 'package:facilite/data/models/simulacao.dart';
 import 'package:facilite/screens/emprestimo/criar_emprestimo.dart';
@@ -19,7 +18,9 @@ import 'screens/login/login_screen.dart';
 import 'package:facilite/screens/dashboard/dashboard_screen.dart';
 import 'package:facilite/screens/emprestimo/editar_emprestimo_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:facilite/screens/inadimplencia/inadimplencia_screen.dart'; // Importe o novo arquivo
+import 'package:facilite/screens/inadimplencia/inadimplencia_screen.dart';
+import 'package:facilite/screens/financeiro/financeiro_screen.dart';
+
 
 void main() async {
   // Inicialize a formatação para português do Brasil
@@ -137,6 +138,7 @@ class MyApp extends StatelessWidget {
         '/seguranca': (context) => const SegurancaScreen(),
         '/relatorios': (context) => const RelatoriosScreen(),
         '/inadimplencia': (context) => const InadimplenciaScreen(),
+        '/financeiro': (context) => const FinanceiroScreen(), // nova rota
       },
     );
   }

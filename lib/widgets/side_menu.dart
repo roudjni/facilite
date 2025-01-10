@@ -56,12 +56,19 @@ class SideMenu extends StatelessWidget {
                       context: context,
                       color: Colors.teal,
                     ),
-                    _buildMenuItem( // novo menu
+                    _buildMenuItem(
                       icon: Icons.money_off_outlined,
                       label: 'Inadimplência',
                       route: '/inadimplencia',
                       context: context,
                       color: Colors.deepOrange,
+                    ),
+                    _buildMenuItem( // Nova opção "Financeiro"
+                      icon: Icons.attach_money_outlined,
+                      label: 'Financeiro',
+                      route: '/financeiro',
+                      context: context,
+                      color: Colors.lime,
                     ),
                     const SizedBox(height: 24),
                     _buildSectionTitle('Sistema'),
@@ -214,7 +221,7 @@ class SideMenu extends StatelessWidget {
 
   Widget _buildFooter(BuildContext context) {
     return Consumer<AppState>(
-        builder: (context, appState, child) {
+      builder: (context, appState, child) {
         final userName = appState.username;
         return Container(
           padding: const EdgeInsets.all(16),
@@ -305,7 +312,7 @@ class SideMenu extends StatelessWidget {
             ],
           ),
         );
-        },
+      },
     );
   }
 }
