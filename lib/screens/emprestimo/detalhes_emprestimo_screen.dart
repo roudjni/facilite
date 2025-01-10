@@ -581,7 +581,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
     final valorTotal = widget.emprestimo.valor * (1 + widget.emprestimo.juros / 100);
     final valorParcela = valorTotal / widget.emprestimo.parcelas;
     final lucro = valorTotal - widget.emprestimo.valor;
-    final taxaMensal = widget.emprestimo.juros / widget.emprestimo.parcelas;
+    // Removida a variável taxaMensal
 
     return Card(
       color: cardBackground,
@@ -617,7 +617,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
               children: [
                 Expanded(
                   child: _buildMainValueCard(
-                    'Principal',
+                    'Valor do empréstimo',
                     appState.numberFormat.format(widget.emprestimo.valor),
                     Colors.blue,
                   ),
@@ -625,7 +625,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildMainValueCard(
-                    'Total',
+                    'Valor com juros',
                     appState.numberFormat.format(valorTotal),
                     Colors.green,
                   ),
@@ -654,7 +654,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                       ),
                       Expanded(
                         child: _buildCompactInfo(
-                          'Valor Parcela',
+                          'Valor da parcela',
                           appState.numberFormat.format(valorParcela),
                           Colors.green,
                         ),
@@ -666,15 +666,15 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                     children: [
                       Expanded(
                         child: _buildCompactInfo(
-                          'Taxa Total',
+                          'Taxa de juros',
                           '${widget.emprestimo.juros.toStringAsFixed(0)}%',
                           Colors.purple,
                         ),
                       ),
                       Expanded(
                         child: _buildCompactInfo(
-                          'Taxa Mensal',
-                          '${taxaMensal.toStringAsFixed(0)}%',
+                          'Periodicidade',
+                          widget.emprestimo.tipoParcela,
                           Colors.blue,
                         ),
                       ),
@@ -999,7 +999,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Data do Pagamento',
+                            'Data do pagamento',
                             style: TextStyle(color: Colors.grey[400]),
                           ),
                           const SizedBox(height: 4),
@@ -1037,7 +1037,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                               horizontal: 12, vertical: 12),
                         ),
                         icon: const Icon(Icons.undo, size: 18),
-                        label: const Text('Desfazer Pagamento'),
+                        label: const Text('Desfazer pagamento'),
                       )
                           : // Botões "Pagar Hoje" e "Pagar Outra Data"
                       Row(
@@ -1069,7 +1069,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                                   horizontal: 12, vertical: 12),
                             ),
                             icon: const Icon(Icons.today, size: 18),
-                            label: const Text('Pagar Hoje'),
+                            label: const Text('Pagar hoje'),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton.icon(
@@ -1117,7 +1117,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                             ),
                             icon:
                             const Icon(Icons.calendar_today, size: 18),
-                            label: const Text('Pagar Outra Data'),
+                            label: const Text('Pagar outra data'),
                           ),
                         ],
                       ),
