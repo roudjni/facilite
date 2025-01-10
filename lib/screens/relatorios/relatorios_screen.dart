@@ -96,9 +96,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     print('Ano selecionado: $anoSelecionado');
 
     // Obter a lista de empréstimos filtrados ou todos os empréstimos
-    final List<Emprestimo> emprestimos = emprestimosFiltrados ?? await appState.databaseHelper.getAllEmprestimos();
+    List<Emprestimo> emprestimos = emprestimosFiltrados ?? await appState.databaseHelper.getAllEmprestimos();
 
     print('Número de empréstimos encontrados (todos): ${emprestimos.length}');
+
+    // Filtrar por ano, se "Todos os Meses" estiver selecionado
+    if (mesSelecionado == TODOS_OS_MESES) {
+      emprestimos = emprestimos.where((emprestimo) {
+        return emprestimo.parcelasDetalhes.any((parcela) {
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+          return dataVencimento.year == anoSelecionado;
+        });
+      }).toList();
+    }
 
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
