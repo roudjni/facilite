@@ -208,90 +208,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MainLayout(
-      title: 'Relatórios',
-      actions: [_buildFiltroMesAno()],
-      child: relatorio == null
-          ? const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-        ),
-      )
-          : FadeTransition(
-        opacity: _fadeAnimation,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildResumo(),
-                    const SizedBox(height: 16),
-                    Row( // Alterando para Row para colocar as seções lado a lado
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildGraficoSection(
-                            title: 'Recebido vs. Pendente',
-                            child: _buildGraficoDePizza(),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildPrevisaoRecebimentos(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: TextField(
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Buscar por cliente...',
-                          hintStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.grey[850]?.withOpacity(0.5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onChanged: (text) {
-                          setState(() {
-                            _searchText = text;
-                          });
-                          final appState = Provider.of<AppState>(context, listen: false);
-                          final emprestimosFiltrados = appState.emprestimosRecentes.where((emprestimo) {
-                            return emprestimo.nome.toLowerCase().contains(_searchText.toLowerCase());
-                          }).toList();
-                          _carregarRelatorio(emprestimosFiltrados: emprestimosFiltrados);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              sliver: _buildListaDetalhada(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildPrevisaoRecebimentos() {
     if (_isLoadingPrevisao) {
       return Container(
-        height: 300,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.grey[850]?.withOpacity(0.5),
@@ -308,7 +227,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
     if (_erroPrevisao != null) {
       return Container(
-        height: 300,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.grey[850]?.withOpacity(0.5),
@@ -348,7 +266,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
     if (_previsaoRecebimentos.isEmpty) {
       return Container(
-        height: 300,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.grey[850]?.withOpacity(0.5),
@@ -453,76 +370,77 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           const SizedBox(height: 16),
           const Divider(height: 1, color: Colors.white10),
           const SizedBox(height: 16),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: previsaoExibida.length,
-            separatorBuilder: (context, index) => const Divider(
-              height: 16,
-              color: Colors.white10,
-            ),
-            itemBuilder: (context, index) {
-              final item = previsaoExibida[index];
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            item['mes'].substring(0, 3),
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: previsaoExibida.length,
+              separatorBuilder: (context, index) => const Divider(
+                height: 16,
+                color: Colors.white10,
+              ),
+              itemBuilder: (context, index) {
+                final item = previsaoExibida[index];
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              item['mes'].substring(0, 3),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Text(
+                          item['mes'],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        item['mes'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        NumberFormat.currency(
+                          locale: 'pt_BR',
+                          symbol: 'R\$',
+                        ).format(item['valor']),
+                        style: TextStyle(
+                          color: Colors.green.shade300,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      NumberFormat.currency(
-                        locale: 'pt_BR',
-                        symbol: 'R\$',
-                      ).format(item['valor']),
-                      style: TextStyle(
-                        color: Colors.green.shade300,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 16),
           const Divider(height: 1, color: Colors.white10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -566,6 +484,89 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MainLayout(
+      title: 'Relatórios',
+      actions: [_buildFiltroMesAno()],
+      child: relatorio == null
+          ? const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+        ),
+      )
+          : FadeTransition(
+        opacity: _fadeAnimation,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildResumo(),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 400, // Altura fixa para ambos os cards
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _buildGraficoSection(
+                              title: 'Recebido vs. Pendente',
+                              child: _buildGraficoDePizza(),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildPrevisaoRecebimentos(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: TextField(
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por cliente...',
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.grey[850]?.withOpacity(0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (text) {
+                          setState(() {
+                            _searchText = text;
+                          });
+                          final appState = Provider.of<AppState>(context, listen: false);
+                          final emprestimosFiltrados = appState.emprestimosRecentes.where((emprestimo) {
+                            return emprestimo.nome.toLowerCase().contains(_searchText.toLowerCase());
+                          }).toList();
+                          _carregarRelatorio(emprestimosFiltrados: emprestimosFiltrados);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              sliver: _buildListaDetalhada(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -783,31 +784,33 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                 PieChart(
                   PieChartData(
                     sectionsSpace: 2,
-                    centerSpaceRadius: 35 * _zoomLevel,
+                    centerSpaceRadius: 55 * _zoomLevel,
                     sections: [
                       PieChartSectionData(
                         value: recebido,
                         color: Colors.green[400],
-                        title: '',
-                        radius: _initialRadius * _zoomLevel,
-                        badgeWidget: _buildBadgeWidget(
-                          recebidoPercentual,
-                          Colors.green[400]!,
+                        title: '${recebidoPercentual.toStringAsFixed(1)}%',
+                        titleStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        badgePositionPercentageOffset: 0.9,
-                        showTitle: false,
+                        radius: _initialRadius * _zoomLevel,
+                        titlePositionPercentageOffset: 0.6,
+                        showTitle: true,
                       ),
                       PieChartSectionData(
                         value: pendente,
                         color: Colors.orange[400],
-                        title: '',
-                        radius: _initialRadius * _zoomLevel,
-                        badgeWidget: _buildBadgeWidget(
-                          pendentePercentual,
-                          Colors.orange[400]!,
+                        title: '${pendentePercentual.toStringAsFixed(1)}%',
+                        titleStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        badgePositionPercentageOffset: 0.9,
-                        showTitle: false,
+                        radius: _initialRadius * _zoomLevel,
+                        titlePositionPercentageOffset: 0.6,
+                        showTitle: true,
                       ),
                     ],
                     borderData: FlBorderData(show: false),
@@ -833,7 +836,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                         ).format(total),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -867,28 +870,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBadgeWidget(double percentage, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        '${percentage.toStringAsFixed(1)}%',
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }
