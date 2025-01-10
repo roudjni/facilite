@@ -95,7 +95,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     print('Mês selecionado: $mesSelecionado');
     print('Ano selecionado: $anoSelecionado');
 
-    // Obter todos os empréstimos, independentemente do filtro de data inicial
+    // Obter a lista de empréstimos filtrados ou todos os empréstimos
     final List<Emprestimo> emprestimos = emprestimosFiltrados ?? await appState.databaseHelper.getAllEmprestimos();
 
     print('Número de empréstimos encontrados (todos): ${emprestimos.length}');
@@ -110,6 +110,17 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
 
       if (emprestimoAtualizado != null) {
+        // Filtrar as parcelas do empréstimo pelo mês e ano selecionados, se não for "Todos os Meses"
+        if (mesSelecionado != TODOS_OS_MESES) {
+          final temParcelaNoMes = emprestimoAtualizado.parcelasDetalhes.any((p) {
+            if (p['status'] == 'Paga') return false;
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+          });
+
+          if (!temParcelaNoMes) continue; // Pula para o próximo empréstimo se não houver parcela no mês
+        }
+
         totalEmprestado += emprestimoAtualizado.valor;
         final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
         final recebido = emprestimoAtualizado.parcelasDetalhes
@@ -118,11 +129,10 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         totalRecebido += recebido;
         lucroEsperado += valorTotal - emprestimoAtualizado.valor;
 
-        // Cálculo do valor pendente para o mês selecionado
+        // Cálculo do valor pendente
         if (mesSelecionado != TODOS_OS_MESES) {
           final parcelasPendentesMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
             if (p['status'] == 'Paga') return false;
-
             final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
             return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
           });
@@ -157,10 +167,13 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           }
         }
 
-        tendenciaEmprestimos.add({
-          'mes': DateFormat('MMM').format(data),
-          'valor': valorEmprestadoMes,
-        });
+        // Só adiciona o mês se houver valor emprestado
+        if (valorEmprestadoMes > 0) {
+          tendenciaEmprestimos.add({
+            'mes': DateFormat('MMM').format(data),
+            'valor': valorEmprestadoMes,
+          });
+        }
       }
     }
 
