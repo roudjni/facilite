@@ -548,17 +548,17 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           return Text('Erro: ${snapshot.error}', style: TextStyle(color: Colors.red),);
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Text(
-            'Nenhuma parcela prevista para esse mês.',
+            'Nenhum recebimento previsto para esse mês.',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           );
         } else {
-          final parcelas = snapshot.data!;
+          final clientes = snapshot.data!;
           return  ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: parcelas.length,
+              itemCount: clientes.length,
               itemBuilder: (context, index) {
-                final parcela = parcelas[index];
+                final cliente = clientes[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
@@ -568,7 +568,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       Expanded(
                         flex: 3,
                         child: Text(
-                          '${parcela['nomeCliente']} | ${parcela['numero']}/${parcela['totalParcelas']}',
+                          '${cliente['nomeCliente']} | ${cliente['parcelasCount']} parcelas',
                           style: const TextStyle(color: Colors.white, fontSize: 11) ,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -577,7 +577,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                       Expanded(
                         flex: 3,
                         child: Text(
-                          parcela['dataVencimento'],
+                          cliente['dataVencimentos'],
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 11,
@@ -593,7 +593,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                           NumberFormat.currency(
                             locale: 'pt_BR',
                             symbol: 'R\$',
-                          ).format(parcela['valor']),
+                          ).format(cliente['valorTotal']),
                           style: const TextStyle(color: Colors.white70, fontSize: 11) ,
                           textAlign: TextAlign.right,
                         ),
@@ -610,26 +610,43 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Future<List<Map<String,dynamic>>> _getParcelasPrevisao(String mes) async {
     final appState = Provider.of<AppState>(context, listen: false);
-    final parcelas = <Map<String,dynamic>>[];
+    final parcelasAgrupadas = <String, Map<String, dynamic>>{};
     final ano = DateTime.now().year;
     final mesNumber = DateFormat('MMM', 'pt_BR').parse(mes).month;
 
     for (final emprestimo in appState.emprestimosRecentes){
       final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
       if (emprestimoAtualizado != null) {
-        for (final parcela in emprestimoAtualizado.parcelasDetalhes) {
+        final parcelasNoMes = emprestimoAtualizado.parcelasDetalhes.where((parcela){
           final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
-          if (dataVencimento.month == mesNumber && dataVencimento.year == ano){
-            parcelas.add({
-              ...parcela,
-              'nomeCliente': emprestimo.nome,
-              'totalParcelas': emprestimo.parcelas
-            });
+          return dataVencimento.month == mesNumber && dataVencimento.year == ano;
+        }).toList();
+
+        if (parcelasNoMes.isNotEmpty) {
+          double valorTotal = 0;
+          final List<String> diasVencimento = [];
+          for (var parcela in parcelasNoMes) {
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+            valorTotal += parcela['valor'];
+            diasVencimento.add(dataVencimento.day.toString());
           }
+
+
+          final firstParcela = parcelasNoMes.first;
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(firstParcela['dataVencimento']);
+          String dataVencimentoFormatada =  '${diasVencimento.join(", ")} de ${DateFormat('MMMM yyyy', 'pt_BR').format(dataVencimento)}';
+
+
+          parcelasAgrupadas[emprestimoAtualizado.nome] = {
+            'nomeCliente': emprestimoAtualizado.nome,
+            'parcelasCount': parcelasNoMes.length,
+            'dataVencimentos': dataVencimentoFormatada,
+            'valorTotal': valorTotal,
+          };
         }
       }
     }
-    return parcelas;
+    return parcelasAgrupadas.values.toList();
   }
 
   @override
