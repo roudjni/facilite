@@ -31,6 +31,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   int _indiceInicialPrevisao = 0; // Variável para controlar o índice inicial da previsão
   final int _mesesExibidos = 4; // Número de meses exibidos na previsão
   static const int TODOS_OS_MESES = 0; // Valor especial para representar a opção "Todos"
+  int _indiceItemExpandido = -1;
 
   @override
   void initState() {
@@ -413,62 +414,78 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
               ),
               itemBuilder: (context, index) {
                 final item = previsaoExibida[index];
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+                final isExpanded = _indiceItemExpandido == index;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _indiceItemExpandido = isExpanded ? -1 : index;
+                    });
+                  },
+                  child: Column(
                       children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              item['mes'].substring(0, 3),
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      item['mes'].substring(0, 3),
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  item['mes'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                NumberFormat.currency(
+                                  locale: 'pt_BR',
+                                  symbol: 'R\$',
+                                ).format(item['valor']),
+                                style: TextStyle(
+                                  color: Colors.green.shade300,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          item['mes'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        NumberFormat.currency(
-                          locale: 'pt_BR',
-                          symbol: 'R\$',
-                        ).format(item['valor']),
-                        style: TextStyle(
-                          color: Colors.green.shade300,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+                        if (isExpanded) ...[
+                          const SizedBox(height: 12),
+                          _buildParcelasPrevisao(item['mes'])
+                        ]
+                      ]
+                  ),
                 );
               },
             ),
@@ -518,6 +535,100 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         ],
       ),
     );
+  }
+
+  Widget _buildParcelasPrevisao(String mes) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _getParcelasPrevisao(mes),
+      builder: (context, snapshot){
+        if (snapshot.connectionState == ConnectionState.waiting){
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Text('Erro: ${snapshot.error}', style: TextStyle(color: Colors.red),);
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Text(
+            'Nenhuma parcela prevista para esse mês.',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          );
+        } else {
+          final parcelas = snapshot.data!;
+          return  ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: parcelas.length,
+              itemBuilder: (context, index) {
+                final parcela = parcelas[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Cliente e Número Parcela
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          '${parcela['nomeCliente']} | ${parcela['numero']}/${parcela['totalParcelas']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 11) ,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Data de Vencimento
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          parcela['dataVencimento'],
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+
+                      // Valor da Parcela
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          NumberFormat.currency(
+                            locale: 'pt_BR',
+                            symbol: 'R\$',
+                          ).format(parcela['valor']),
+                          style: const TextStyle(color: Colors.white70, fontSize: 11) ,
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+          );
+        }
+      },
+    );
+  }
+
+  Future<List<Map<String,dynamic>>> _getParcelasPrevisao(String mes) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final parcelas = <Map<String,dynamic>>[];
+    final ano = DateTime.now().year;
+    final mesNumber = DateFormat('MMM', 'pt_BR').parse(mes).month;
+
+    for (final emprestimo in appState.emprestimosRecentes){
+      final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
+      if (emprestimoAtualizado != null) {
+        for (final parcela in emprestimoAtualizado.parcelasDetalhes) {
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+          if (dataVencimento.month == mesNumber && dataVencimento.year == ano){
+            parcelas.add({
+              ...parcela,
+              'nomeCliente': emprestimo.nome,
+              'totalParcelas': emprestimo.parcelas
+            });
+          }
+        }
+      }
+    }
+    return parcelas;
   }
 
   @override
