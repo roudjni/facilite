@@ -129,20 +129,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
 
       if (emprestimoAtualizado != null) {
-        totalEmprestado += emprestimoAtualizado.valor;
-        final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
 
-        // Filtrar as parcelas do empréstimo pelo mês e ano selecionados, se não for "Todos os Meses"
+        // Filtrar os empréstimos pelo mês e ano selecionados, se não for "Todos os Meses"
         bool temParcelaNoMes = true;
         if (mesSelecionado != TODOS_OS_MESES) {
-          temParcelaNoMes = emprestimoAtualizado.parcelasDetalhes.any((p) {
-            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
-            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
-          });
+          final dataCriacao = DateFormat('dd/MM/yyyy').parse(appState.dateFormat.format(emprestimoAtualizado.data));
+          temParcelaNoMes = dataCriacao.month == mesSelecionado && dataCriacao.year == anoSelecionado;
         }
 
         // Se não tiver parcela no mês, pula para o próximo empréstimo
         if (!temParcelaNoMes) continue;
+
+        totalEmprestado += emprestimoAtualizado.valor;
+        final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
 
         // Calcular o valor recebido no mês selecionado com base na DATA DE VENCIMENTO
         double recebido = 0.0;
@@ -150,7 +149,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           final recebidoNoMes = emprestimoAtualizado.parcelasDetalhes
               .where((p) => p['status'] == 'Paga' && p['dataPagamento'] != null)
               .where((p) {
-            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataPagamento']!);
             return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
           }).fold(0.0, (sum, p) => sum + p['valor']);
           recebido = recebidoNoMes;
@@ -161,24 +160,25 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         }
         totalRecebido += recebido;
 
-        // *** Correção: Cálculo do lucro esperado para o mês selecionado
+        // Calcular o lucro esperado para o mês selecionado
         if (mesSelecionado != TODOS_OS_MESES) {
           final parcelasNoMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
             final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
             return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
           });
 
-          // Calculando o lucro proporcional da parcela para cada parcela do mes
-          final lucroTotalEmprestimo = valorTotal - emprestimoAtualizado.valor;
-          final lucroPorParcela = lucroTotalEmprestimo / emprestimoAtualizado.parcelas;
           for (final parcela in parcelasNoMes) {
-            lucroEsperado += lucroPorParcela;
+            // Agora, calculamos o lucro esperado para todas as parcelas do mês,
+            // independentemente do status de pagamento.
+            final valorParcela = parcela['valor'];
+            final proporcaoLucro = (emprestimoAtualizado.juros / 100) / emprestimoAtualizado.parcelas;
+            // Adiciona o lucro da parcela ao lucro total do mês
+            lucroEsperado += valorParcela * proporcaoLucro;
           }
         } else {
           // Para "Todos os Meses", calcular o lucro total do empréstimo
           lucroEsperado += valorTotal - emprestimoAtualizado.valor;
         }
-        // *** Fim da correção ***
 
         // Cálculo do valor pendente
         if (mesSelecionado != TODOS_OS_MESES) {
