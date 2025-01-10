@@ -1,5 +1,7 @@
 import 'package:facilite/data/models/emprestimo.dart';
+import 'package:facilite/utils/relatorio_gerador_pdf.dart';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/main_layout.dart';
@@ -653,7 +655,30 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Widget build(BuildContext context) {
     return MainLayout(
       title: 'Relatórios',
-      actions: [_buildFiltroMesAno()],
+      actions: [
+        _buildFiltroMesAno(),
+        IconButton(
+          icon: const Icon(Icons.picture_as_pdf, color: Colors.white70),
+          onPressed: () async {
+            final appState = Provider.of<AppState>(context, listen: false);
+            final pdfBytes = await gerarRelatorioPdf(
+              relatorio!,
+              mesSelecionado,
+              anoSelecionado,
+              _searchText,
+              appState.emprestimosRecentes,
+            );
+
+            // Use o pdfBytes para salvar/visualizar o PDF
+            if (pdfBytes != null) {
+              await Printing.sharePdf(
+                bytes: pdfBytes,
+                filename: 'relatorio.pdf',
+              );
+            }
+          },
+        ),
+      ],
       child: relatorio == null
           ? const Center(
         child: CircularProgressIndicator(
