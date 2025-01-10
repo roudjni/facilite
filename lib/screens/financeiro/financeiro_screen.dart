@@ -30,7 +30,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final now = DateTime.now();
 
     final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
-    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month -1 , now.year);
+    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month - 1 , now.year);
+
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -43,19 +44,12 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
     return MainLayout(
       title: 'Financeiro',
-      actions: [
-        IconButton(
-          onPressed: _adicionarDinheiroDialog,
-          icon: const Icon(Icons.add_circle_outline),
-        ),
-      ],
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -75,6 +69,16 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                     Colors.cyan,
                   ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildQuickActionButton(
+                      context,
+                      icon: Icons.add_circle_outline,
+                      label: 'Adicionar Dinheiro',
+                      color: Colors.blue,
+                      onTap: _adicionarDinheiroDialog
+                  ),
+                ),
               ],
             ),
           ],
@@ -82,6 +86,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       ),
     );
   }
+
 
   Future<void> _adicionarDinheiroDialog() async {
     final appState = Provider.of<AppState>(context, listen: false);
@@ -137,7 +142,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   }
 
   Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color) {
-    return Card(
+    return  Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -201,7 +206,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           width: 1,
         ),
       ),
-      child: Padding(
+      child:  Padding(
         padding: const EdgeInsets.all(16),
         child:  Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +235,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                   '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
                   style: TextStyle(
                     fontSize: 18,
-                    color: diferenca > 0 ? Colors.green : Colors.red,
+                    color:  diferenca > 0 ? Colors.green : Colors.red,
                   ),
                 ),
               ],
@@ -244,6 +249,50 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildQuickActionButton(
+      BuildContext context, {
+        required IconData icon,
+        required String label,
+        required VoidCallback onTap,
+        required Color color,
+      }) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            height: 72,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: color.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 28, color: color),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
