@@ -22,7 +22,6 @@ class SimulacaoForm extends StatefulWidget {
 
 class SimulacaoFormState extends State<SimulacaoForm> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
   final _valorController = TextEditingController();
   final _parcelasController = TextEditingController();
   final _jurosController = TextEditingController();
@@ -33,11 +32,10 @@ class SimulacaoFormState extends State<SimulacaoForm> {
   void initState() {
     super.initState();
     if (widget.simulacao != null) {
-      _nomeController.text = widget.simulacao!.nome;
-      _valorController.text =
-          widget.simulacao!.valor.toStringAsFixed(2);
+      final appState = Provider.of<AppState>(context, listen: false);
+      _valorController.text = appState.numberFormat.format(widget.simulacao!.valor).replaceAll('R\$', '').trim();
       _parcelasController.text = widget.simulacao!.parcelas.toString();
-      _jurosController.text = widget.simulacao!.juros.toString();
+      _jurosController.text = appState.numberFormat.format(widget.simulacao!.juros).replaceAll('R\$','').trim();
       _tipoParcela = widget.simulacao!.tipoParcela;
       _dataVencimento = widget.simulacao!.dataVencimento;
     }
@@ -45,7 +43,6 @@ class SimulacaoFormState extends State<SimulacaoForm> {
 
   @override
   void dispose() {
-    _nomeController.dispose();
     _valorController.dispose();
     _parcelasController.dispose();
     _jurosController.dispose();
@@ -60,7 +57,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
     double valor =
     double.parse(_valorController.text.replaceAll('.', '').replaceAll(',', '.'));
     int parcelasNum = int.parse(_parcelasController.text);
-    double juros = double.parse(_jurosController.text) / 100;
+    double juros = double.parse(_jurosController.text.replaceAll('.', '').replaceAll(',', '.')) / 100;
 
     appState.setValor(valor);
     appState.setParcelas(parcelasNum);
@@ -81,20 +78,34 @@ class SimulacaoFormState extends State<SimulacaoForm> {
       return;
     }
     final parsed = double.parse(value) / 100;
-    controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '');
+    controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '').trim();
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: controller.text.length),
+    );
+  }
+  void _formatarJuros(TextEditingController controller, String value) {
+    final appState = Provider.of<AppState>(context, listen: false);
+    value = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (value.isEmpty) {
+      controller.text = '';
+      return;
+    }
+    final parsed = double.parse(value);
+    controller.text = appState.numberFormat.format(parsed).replaceAll('R\$','').replaceAll(',00', '').trim();
     controller.selection = TextSelection.fromPosition(
       TextPosition(offset: controller.text.length),
     );
   }
 
+
   // Metodo para obter os dados da simulação (será usado pela tela pai)
   Simulacao getSimulacaoData() {
     return Simulacao(
-      nome: _nomeController.text,
+      nome: '',
       valor: double.parse(
           _valorController.text.replaceAll('.', '').replaceAll(',', '.')),
       parcelas: int.parse(_parcelasController.text),
-      juros: double.parse(_jurosController.text),
+      juros: double.parse(_jurosController.text.replaceAll('.', '').replaceAll(',', '.')),
       data: DateTime.now(), // Você pode ajustar isso se necessário
       tipoParcela: _tipoParcela,
       parcelasDetalhes:
@@ -120,17 +131,6 @@ class SimulacaoFormState extends State<SimulacaoForm> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _nomeController,
-                  label: 'Nome do Cliente',
-                  icon: Icons.person_outline,
-                  validator: (value) =>
-                  value?.isEmpty ?? true ? 'Digite o nome do cliente' : null,
-                  onChanged: (value) => appState.setNome(value),
-                ),
-              ),
-              const SizedBox(width: 16),
               Expanded(
                 child: AppTextField(
                   controller: _valorController,
@@ -195,6 +195,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
                   value?.isEmpty ?? true ? 'Digite a taxa de juros' : null,
                   onChanged: (value) {
                     if (value.isNotEmpty) {
+                      _formatarJuros(_jurosController,value);
                       appState.setJuros(double.parse(value));
                     }
                   },
@@ -228,12 +229,12 @@ class SimulacaoFormState extends State<SimulacaoForm> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.calculate_outlined, size: 24),
-                const SizedBox(width: 12),
-                const Text(
+                Icon(Icons.calculate_outlined, size: 24),
+                SizedBox(width: 12),
+                Text(
                   'Calcular Simulação',
                   style: TextStyle(
                     fontSize: 16,

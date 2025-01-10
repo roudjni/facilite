@@ -1,4 +1,3 @@
-// lib/data/models/simulacao.dart
 import 'dart:convert';
 
 class Simulacao {
@@ -24,10 +23,7 @@ class Simulacao {
     this.dataVencimento,
   });
 
-
-
   factory Simulacao.fromMap(Map<String, dynamic> map) {
-
     return Simulacao(
       id: map['id'],
       nome: map['nome'],
@@ -53,5 +49,29 @@ class Simulacao {
       'parcelas_detalhes': json.encode(parcelasDetalhes),
       'data_vencimento': dataVencimento?.toIso8601String(),
     };
+  }
+
+  Simulacao copyWith({
+    int? id,
+    String? nome,
+    double? valor,
+    int? parcelas,
+    double? juros,
+    DateTime? data,
+    String? tipoParcela,
+    List<Map<String, dynamic>>? parcelasDetalhes,
+    DateTime? dataVencimento,
+  }) {
+    return Simulacao(
+      id: id ?? this.id,
+      nome: nome ?? this.nome,
+      valor: valor ?? this.valor,
+      parcelas: parcelas ?? this.parcelas,
+      juros: juros ?? this.juros,
+      data: data ?? this.data,
+      tipoParcela: tipoParcela ?? this.tipoParcela,
+      parcelasDetalhes: parcelasDetalhes ?? this.parcelasDetalhes,
+      dataVencimento: dataVencimento ?? this.dataVencimento,
+    );
   }
 }
