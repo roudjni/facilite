@@ -482,13 +482,25 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   }
 
   Widget _buildGraficoDePizza() {
-    // Ocultar o gráfico de pizza se a opção "Todos" for selecionada
-    if (mesSelecionado == TODOS_OS_MESES) {
-      return const SizedBox.shrink();
+    double recebido = 0.0;
+    double pendente = 0.0;
+
+    if (relatorio != null) {
+      if (_searchText.isNotEmpty) {
+        // Se houver uma busca por cliente, use os valores filtrados
+        recebido = relatorio!['totalRecebido'] ?? 0.0;
+        pendente = relatorio!['pendente'] ?? 0.0;
+      } else if (mesSelecionado == TODOS_OS_MESES) {
+        // Se "Todos os Meses" estiver selecionado, calcule com base em todos os empréstimos
+        recebido = relatorio!['totalRecebido'] ?? 0.0;
+        pendente = relatorio!['pendente'] ?? 0.0;
+      } else {
+        // Caso contrário, use os valores do relatório do mês selecionado
+        recebido = relatorio!['totalRecebido'] ?? 0.0;
+        pendente = relatorio!['pendente'] ?? 0.0;
+      }
     }
 
-    final recebido = relatorio!['totalRecebido'];
-    final pendente = relatorio!['pendente'];
     final total = recebido + pendente;
 
     return GestureDetector(
@@ -518,7 +530,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   PieChartSectionData(
                     value: recebido,
                     color: Colors.green[400],
-                    title: '${((recebido / total) * 100).toStringAsFixed(1)}%',
+                    title: total > 0 ? '${((recebido / total) * 100).toStringAsFixed(1)}%' : '0%',
                     radius: _initialRadius * _zoomLevel,
                     titleStyle: const TextStyle(
                       color: Colors.white,
@@ -531,7 +543,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   PieChartSectionData(
                     value: pendente,
                     color: Colors.orange[400],
-                    title: '${((pendente / total) * 100).toStringAsFixed(1)}%',
+                    title: total > 0 ? '${((pendente / total) * 100).toStringAsFixed(1)}%' : '0%',
                     radius: _initialRadius * _zoomLevel,
                     titleStyle: const TextStyle(
                       color: Colors.white,
