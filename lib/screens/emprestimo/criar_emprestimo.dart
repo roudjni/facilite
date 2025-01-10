@@ -6,6 +6,9 @@ import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/simulacao_form.dart';
 import 'package:facilite/widgets/shared/shared_widgets.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:facilite/widgets/shared/calendar_dialog.dart';
+import 'package:facilite/widgets/shared/calendar_theme.dart';
+import 'package:intl/intl.dart';
 
 class CriarEmprestimoScreen extends StatefulWidget {
   final Simulacao? simulacao;
@@ -29,6 +32,7 @@ class _CriarEmprestimoScreenState extends State<CriarEmprestimoScreen>
   late Animation<double> _slideAnimation;
   bool _isSimulationExpanded = true;
   bool _isClientExpanded = false;
+  DateTime? _selectedDate;
 
   final _cpfFormatter = MaskTextInputFormatter(
     mask: '###.###.###-##',
@@ -70,6 +74,111 @@ class _CriarEmprestimoScreenState extends State<CriarEmprestimoScreen>
       _isClientExpanded = true;
     });
     _animationController.forward();
+  }
+
+  Future<void> _selectDate(Map<String, dynamic> parcela) async {
+    final initialDate = _selectedDate ?? DateTime.now();
+
+    final dataEscolhida = await showDialog<DateTime>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 320),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A1A1A),
+                  const Color(0xFF2D2D2D),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Escolha uma Data',
+                  style: TextStyle(
+                    color: Colors.blue[200],
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Theme(
+                  data: AppCalendarTheme.calendarTheme(context),
+                  child: SizedBox(
+                    height: 250,
+                    child: CalendarDatePicker(
+                      initialDate: initialDate,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                      onDateChanged: (DateTime date) {
+                        setState(() {
+                          _selectedDate = date;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: Colors.red[300],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, _selectedDate),
+                      child: Text(
+                        'Confirmar',
+                        style: TextStyle(
+                          color: Colors.blue[300],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (dataEscolhida != null) {
+      setState(() {
+        parcela['dataVencimento'] =
+            DateFormat('dd/MM/yyyy').format(dataEscolhida);
+        _selectedDate = dataEscolhida;
+      });
+
+      _handleSimulacaoCalculada(_totalComJuros, _parcelasDetalhadas);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Data alterada para: ${DateFormat('dd/MM/yyyy').format(dataEscolhida)}',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _criarEmprestimo() async {
@@ -356,13 +465,17 @@ class _CriarEmprestimoScreenState extends State<CriarEmprestimoScreen>
                                                 fontSize: 16,
                                               ),
                                             ),
-                                            Text(
-                                              parcela['dataVencimento'],
-                                              style: TextStyle(
-                                                color: Colors.grey[400],
-                                                fontSize: 12,
+                                            InkWell(
+                                              onTap: () => _selectDate(parcela),
+                                              child:Text(
+                                                parcela['dataVencimento'],
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 12,
+                                                ),
                                               ),
-                                            ),
+                                            )
+
                                           ],
                                         ),
                                       ),
@@ -654,83 +767,6 @@ class _CriarEmprestimoScreenState extends State<CriarEmprestimoScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSimulacaoSection({
-    required String title,
-    required IconData icon,
-    required bool isExpanded,
-    required VoidCallback onToggle,
-    required Widget child,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[900]!,
-            Colors.grey[850]!,
-            Colors.grey[800]!,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: onToggle,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  AnimatedRotation(
-                    duration: const Duration(milliseconds: 300),
-                    turns: isExpanded ? 0.5 : 0,
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: isExpanded ? null : 0,
-            padding: isExpanded
-                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
-                : EdgeInsets.zero,
-            child: isExpanded ? child : null,
-          ),
-        ],
       ),
     );
   }

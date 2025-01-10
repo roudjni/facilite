@@ -5,6 +5,7 @@ import 'package:facilite/data/models/emprestimo.dart';
 import 'package:facilite/widgets/main_layout.dart';
 import 'package:intl/intl.dart';
 import 'package:facilite/utils/pdf_generator.dart';
+import 'package:facilite/widgets/shared/calendar_dialog.dart';
 
 class DetalhesEmprestimoScreen extends StatefulWidget {
   final Emprestimo emprestimo;
@@ -878,63 +879,6 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
     );
   }
 
-
-
-  Widget _buildSummaryCard(
-      String label,
-      int value,
-      int total,
-      Color color,
-      IconData icon,
-      ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$value de $total',
-              style: TextStyle(
-                color: color,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            LinearProgressIndicator(
-              value: value / total,
-              backgroundColor: color.withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildParcelasList() {
     final appState = Provider.of<AppState>(context, listen: false);
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -975,7 +919,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: cardBackground,
+        color: const Color(0xFF2D2D2D),
         border: Border.all(
           color: statusColor.withOpacity(0.2),
           width: 1,
@@ -1050,6 +994,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Data do Pagamento
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1064,33 +1009,117 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                           ),
                         ],
                       ),
+
+                      // Botões para ações
+                      estaPaga
+                          ? // Botão "Desfazer Pagamento"
                       ElevatedButton.icon(
                         onPressed: () async {
-                          final agora = DateTime.now();
                           setState(() {
-                            if (estaPaga) {
-                              parcela['status'] = 'No prazo';
-                              parcela['dataPagamento'] = null;
-                            } else {
-                              parcela['status'] = 'Paga';
-                              parcela['dataPagamento'] = DateFormat('dd/MM/yyyy').format(agora);
-                            }
+                            parcela['status'] = 'No prazo';
+                            parcela['dataPagamento'] = null;
                           });
 
-                          // Atualiza a lista de parcelas no objeto Emprestimo
                           final emprestimo = widget.emprestimo;
-                          emprestimo.parcelasDetalhes = widget.emprestimo.parcelasDetalhes;
-
-                          // Salva o empréstimo atualizado no banco de dados
-                          final appState = Provider.of<AppState>(context, listen: false);
+                          emprestimo.parcelasDetalhes =
+                              widget.emprestimo.parcelasDetalhes;
                           await appState.updateEmprestimo(emprestimo);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Pagamento desfeito com sucesso!'),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: estaPaga ? Colors.orange : Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          backgroundColor: Colors.orange,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
-                        icon: Icon(estaPaga ? Icons.undo : Icons.check, size: 18),
-                        label: Text(estaPaga ? 'Desfazer Pagamento' : 'Marcar como Pago'),
+                        icon: const Icon(Icons.undo, size: 18),
+                        label: const Text('Desfazer Pagamento'),
+                      )
+                          : // Botões "Pagar Hoje" e "Pagar Outra Data"
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final hoje = DateTime.now();
+                              setState(() {
+                                parcela['status'] = 'Paga';
+                                parcela['dataPagamento'] =
+                                    DateFormat('dd/MM/yyyy').format(hoje);
+                              });
+
+                              final emprestimo = widget.emprestimo;
+                              emprestimo.parcelasDetalhes =
+                                  widget.emprestimo.parcelasDetalhes;
+                              await appState.updateEmprestimo(emprestimo);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                  Text('Pagamento registrado para hoje!'),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                            ),
+                            icon: const Icon(Icons.today, size: 18),
+                            label: const Text('Pagar Hoje'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final initialDate = parcela['dataPagamento'] != null
+                                  ? DateFormat('dd/MM/yyyy').parse(parcela['dataPagamento'])
+                                  : DateTime.now();
+
+
+                              final dataEscolhida = await showDialog<DateTime>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AppCalendarDialog(initialDate: initialDate); // Usando o novo Widget
+                                },
+                              );
+
+
+
+                              if (dataEscolhida != null) {
+                                setState(() {
+                                  parcela['status'] = 'Paga';
+                                  parcela['dataPagamento'] =
+                                      DateFormat('dd/MM/yyyy')
+                                          .format(dataEscolhida);
+                                });
+
+                                final emprestimo = widget.emprestimo;
+                                emprestimo.parcelasDetalhes =
+                                    widget.emprestimo.parcelasDetalhes;
+                                await appState.updateEmprestimo(emprestimo);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Pagamento registrado para ${DateFormat('dd/MM/yyyy').format(dataEscolhida)}!',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                            ),
+                            icon:
+                            const Icon(Icons.calendar_today, size: 18),
+                            label: const Text('Pagar Outra Data'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
