@@ -64,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: _buildInfoCard(
                       title: 'Saldo Disponível',
-                      value: 'R\$ 5.000,00',
+                      value: appState.numberFormat.format(appState.saldoDisponivel),
                       icon: Icons.account_balance_wallet,
                       color: Colors.blue,
                     ),

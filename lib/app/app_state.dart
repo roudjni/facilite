@@ -26,6 +26,7 @@ class AppState extends ChangeNotifier {
   double _totalComJuros = 0.0;
   String _origem = '';
   Emprestimo? _currentEmprestimo;
+  double _saldoDisponivel = 0.0; // Adicionado o saldoDisponivel
 
   AppState();
 
@@ -44,6 +45,7 @@ class AppState extends ChangeNotifier {
   double get totalComJuros => _totalComJuros;
   String get origem => _origem;
   Emprestimo? get currentEmprestimo => _currentEmprestimo;
+  double get saldoDisponivel => _saldoDisponivel;  // Getter para o saldo disponível
 
   // Expor as propriedades privadas como getters
   int get currentPage => _currentPage;
@@ -508,5 +510,12 @@ class AppState extends ChangeNotifier {
       'taxaInadimplencia': totalDevido > 0 ? (totalInadimplente / totalDevido) * 100 : 0.0,
     };
   }
+
+  // Metodo para adicionar saldo ao disponível.
+  void adicionarSaldoDisponivel(double valor) {
+    _saldoDisponivel += valor;
+    notifyListeners();
+  }
+
 
 }
