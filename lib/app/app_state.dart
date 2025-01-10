@@ -132,8 +132,6 @@ class AppState extends ChangeNotifier {
     Future.microtask(notifyListeners);
     try {
       _emprestimosRecentes = await _databaseHelper.getAllEmprestimos();
-      print("loadAllEmprestimos chamado, retornando ${_emprestimosRecentes.length} itens");
-      print("Itens na lista _emprestimosRecentes: ${_emprestimosRecentes}");
     } finally {
       _isLoading = false;
       Future.microtask(notifyListeners);

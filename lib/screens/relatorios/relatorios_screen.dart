@@ -148,10 +148,10 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         double recebido = 0.0;
         if (mesSelecionado != TODOS_OS_MESES) {
           final recebidoNoMes = emprestimoAtualizado.parcelasDetalhes
-              .where((p) => p['status'] == 'Paga')
+              .where((p) => p['status'] == 'Paga' && p['dataPagamento'] != null)
               .where((p) {
             final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
-            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado; // Filtra pela data de VENCIMENTO
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
           }).fold(0.0, (sum, p) => sum + p['valor']);
           recebido = recebidoNoMes;
         } else {
@@ -161,9 +161,26 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         }
         totalRecebido += recebido;
 
-        lucroEsperado += valorTotal - emprestimoAtualizado.valor;
+        // *** Correção: Cálculo do lucro esperado para o mês selecionado
+        if (mesSelecionado != TODOS_OS_MESES) {
+          final parcelasNoMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+          });
 
-        // Cálculo do valor pendente (não mudou)
+          // Calculando o lucro proporcional da parcela para cada parcela do mes
+          final lucroTotalEmprestimo = valorTotal - emprestimoAtualizado.valor;
+          final lucroPorParcela = lucroTotalEmprestimo / emprestimoAtualizado.parcelas;
+          for (final parcela in parcelasNoMes) {
+            lucroEsperado += lucroPorParcela;
+          }
+        } else {
+          // Para "Todos os Meses", calcular o lucro total do empréstimo
+          lucroEsperado += valorTotal - emprestimoAtualizado.valor;
+        }
+        // *** Fim da correção ***
+
+        // Cálculo do valor pendente
         if (mesSelecionado != TODOS_OS_MESES) {
           final parcelasPendentesMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
             if (p['status'] == 'Paga') return false;
