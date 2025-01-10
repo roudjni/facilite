@@ -653,8 +653,26 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Widget _buildListaDetalhada() {
     final appState = Provider.of<AppState>(context, listen: false);
+
+    // Filtrar a lista de empréstimos recentes com base no período e no texto de busca
     final emprestimos = appState.emprestimosRecentes.where((emprestimo) {
-      return emprestimo.nome.toLowerCase().contains(_searchText.toLowerCase());
+      final nomeCliente = emprestimo.nome.toLowerCase();
+      final textoBusca = _searchText.toLowerCase();
+      final possuiTextoBusca = nomeCliente.contains(textoBusca);
+
+      if (mesSelecionado == TODOS_OS_MESES) {
+        // "Todos os Meses" e um ano específico está selecionado
+        return possuiTextoBusca && emprestimo.parcelasDetalhes.any((parcela) {
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+          return dataVencimento.year == anoSelecionado;
+        });
+      } else {
+        // Um mês e um ano específico estão selecionados
+        return possuiTextoBusca && emprestimo.parcelasDetalhes.any((parcela) {
+          final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+          return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+        });
+      }
     }).toList();
 
     if (emprestimos.isEmpty) {
