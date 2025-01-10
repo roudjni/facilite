@@ -96,7 +96,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
     print('Ano selecionado: $anoSelecionado');
 
     // Obter a lista de empréstimos filtrados ou todos os empréstimos
-    List<Emprestimo> emprestimos = await appState.databaseHelper.getAllEmprestimos();
+    List<Emprestimo> emprestimos = emprestimosFiltrados ?? await appState.databaseHelper.getAllEmprestimos();
 
     print('Número de empréstimos encontrados (todos): ${emprestimos.length}');
 
@@ -129,23 +129,33 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
 
       if (emprestimoAtualizado != null) {
-        // Filtrar as parcelas do empréstimo pelo mês e ano selecionados, se não for "Todos os Meses"
-        if (mesSelecionado != TODOS_OS_MESES) {
-          final temParcelaNoMes = emprestimoAtualizado.parcelasDetalhes.any((p) {
-            if (p['status'] == 'Paga') return false;
-            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
-            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
-          });
-
-          if (!temParcelaNoMes) continue; // Pula para o próximo empréstimo se não houver parcela no mês
-        }
-
         totalEmprestado += emprestimoAtualizado.valor;
         final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
-        final recebido = emprestimoAtualizado.parcelasDetalhes
-            .where((p) => p['status'] == 'Paga')
-            .fold(0.0, (sum, p) => sum + p['valor']);
+
+        // *** Correção: Remover a condição que verifica se há parcelas pendentes no mês
+        bool temParcelaNoMes = true; // Assumir que há parcelas no mês por padrão (removido a logica antiga)
+
+        // Se não tiver parcela no mês, pula para o próximo empréstimo
+        if (mesSelecionado != TODOS_OS_MESES && !temParcelaNoMes) continue;
+        // *** Fim da correção ***
+
+        // Calcular o valor recebido no mês selecionado ou total recebido
+        double recebido = 0.0;
+        if (mesSelecionado != TODOS_OS_MESES) {
+          final recebidoNoMes = emprestimoAtualizado.parcelasDetalhes
+              .where((p) => p['status'] == 'Paga' && p['dataPagamento'] != null)
+              .where((p) {
+            final dataPagamento = DateFormat('dd/MM/yyyy').parse(p['dataPagamento']!);
+            return dataPagamento.month == mesSelecionado && dataPagamento.year == anoSelecionado;
+          }).fold(0.0, (sum, p) => sum + p['valor']);
+          recebido = recebidoNoMes;
+        } else {
+          recebido = emprestimoAtualizado.parcelasDetalhes
+              .where((p) => p['status'] == 'Paga')
+              .fold(0.0, (sum, p) => sum + p['valor']);
+        }
         totalRecebido += recebido;
+
         lucroEsperado += valorTotal - emprestimoAtualizado.valor;
 
         // Cálculo do valor pendente
