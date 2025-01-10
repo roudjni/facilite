@@ -667,14 +667,14 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                       Expanded(
                         child: _buildCompactInfo(
                           'Taxa Total',
-                          '${widget.emprestimo.juros.toStringAsFixed(1)}%',
+                          '${widget.emprestimo.juros.toStringAsFixed(0)}%',
                           Colors.purple,
                         ),
                       ),
                       Expanded(
                         child: _buildCompactInfo(
                           'Taxa Mensal',
-                          '${taxaMensal.toStringAsFixed(2)}%',
+                          '${taxaMensal.toStringAsFixed(0)}%',
                           Colors.blue,
                         ),
                       ),
