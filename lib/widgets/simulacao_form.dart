@@ -1,4 +1,3 @@
-// lib/widgets/emprestimo/simulacao_form.dart
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/data/models/simulacao.dart';
 import 'package:facilite/theme/app_theme.dart';
@@ -35,7 +34,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
       final appState = Provider.of<AppState>(context, listen: false);
       _valorController.text = appState.numberFormat.format(widget.simulacao!.valor).replaceAll('R\$', '').trim();
       _parcelasController.text = widget.simulacao!.parcelas.toString();
-      _jurosController.text = appState.numberFormat.format(widget.simulacao!.juros).replaceAll('R\$','').trim();
+      _jurosController.text = widget.simulacao!.juros.toStringAsFixed(0);
       _tipoParcela = widget.simulacao!.tipoParcela;
       _dataVencimento = widget.simulacao!.dataVencimento;
     }
@@ -83,20 +82,18 @@ class SimulacaoFormState extends State<SimulacaoForm> {
       TextPosition(offset: controller.text.length),
     );
   }
+
   void _formatarJuros(TextEditingController controller, String value) {
-    final appState = Provider.of<AppState>(context, listen: false);
     value = value.replaceAll(RegExp(r'[^0-9]'), '');
     if (value.isEmpty) {
       controller.text = '';
       return;
     }
-    final parsed = double.parse(value);
-    controller.text = appState.numberFormat.format(parsed).replaceAll('R\$','').replaceAll(',00', '').trim();
+    controller.text = int.parse(value).toString();
     controller.selection = TextSelection.fromPosition(
       TextPosition(offset: controller.text.length),
     );
   }
-
 
   // Metodo para obter os dados da simulação (será usado pela tela pai)
   Simulacao getSimulacaoData() {
