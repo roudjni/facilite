@@ -132,21 +132,26 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         totalEmprestado += emprestimoAtualizado.valor;
         final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
 
-        // *** Correção: Remover a condição que verifica se há parcelas pendentes no mês
-        bool temParcelaNoMes = true; // Assumir que há parcelas no mês por padrão (removido a logica antiga)
+        // Filtrar as parcelas do empréstimo pelo mês e ano selecionados, se não for "Todos os Meses"
+        bool temParcelaNoMes = true;
+        if (mesSelecionado != TODOS_OS_MESES) {
+          temParcelaNoMes = emprestimoAtualizado.parcelasDetalhes.any((p) {
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+          });
+        }
 
         // Se não tiver parcela no mês, pula para o próximo empréstimo
-        if (mesSelecionado != TODOS_OS_MESES && !temParcelaNoMes) continue;
-        // *** Fim da correção ***
+        if (!temParcelaNoMes) continue;
 
-        // Calcular o valor recebido no mês selecionado ou total recebido
+        // Calcular o valor recebido no mês selecionado com base na DATA DE VENCIMENTO
         double recebido = 0.0;
         if (mesSelecionado != TODOS_OS_MESES) {
           final recebidoNoMes = emprestimoAtualizado.parcelasDetalhes
-              .where((p) => p['status'] == 'Paga' && p['dataPagamento'] != null)
+              .where((p) => p['status'] == 'Paga')
               .where((p) {
-            final dataPagamento = DateFormat('dd/MM/yyyy').parse(p['dataPagamento']!);
-            return dataPagamento.month == mesSelecionado && dataPagamento.year == anoSelecionado;
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado; // Filtra pela data de VENCIMENTO
           }).fold(0.0, (sum, p) => sum + p['valor']);
           recebido = recebidoNoMes;
         } else {
@@ -158,7 +163,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
         lucroEsperado += valorTotal - emprestimoAtualizado.valor;
 
-        // Cálculo do valor pendente
+        // Cálculo do valor pendente (não mudou)
         if (mesSelecionado != TODOS_OS_MESES) {
           final parcelasPendentesMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
             if (p['status'] == 'Paga') return false;
