@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/main_layout.dart';
+import 'package:intl/intl.dart';
 
 class FinanceiroScreen extends StatefulWidget {
   const FinanceiroScreen({Key? key}) : super(key: key);
@@ -17,9 +18,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _lucroTotal = 0.0;
   double _totalPendente = 0.0;
   double _saldoAtual = 0.0;
+  double _lucroMesAnterior = 0.0;
   List<Map<String, dynamic>> _previsaoRecebimentos = [];
-
-
 
   @override
   void initState() {
@@ -29,9 +29,12 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
   Future<void> _carregarDados() async {
     final appState = Provider.of<AppState>(context, listen: false);
-    final dadosFinanceiro = await appState.calcularRelatorioMensal(DateTime.now().month, DateTime.now().year);
+    final now = DateTime.now();
 
+    final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
+    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month -1 , now.year);
     final previsao = await appState.calcularPrevisaoRecebimentos(6);
+
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -40,6 +43,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       _totalPendente = dadosFinanceiro['pendente'] ?? 0.0;
       _saldoAtual = _totalRecebido - (_totalEmprestado - _totalPendente);
       _previsaoRecebimentos = previsao;
+      _lucroMesAnterior = dadosFinanceiroAnterior['lucro'] ?? 0.0;
       _isLoading = false;
     });
   }
@@ -47,7 +51,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-
 
     return MainLayout(
       title: 'Financeiro',
@@ -63,7 +66,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            // Cards de resumo
             Row(
               children: [
                 Expanded(
@@ -120,6 +122,12 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               Colors.cyan,
             ),
             const SizedBox(height: 16),
+            _buildLucroComparativoCard(
+              'Lucro Atual x Anterior',
+              appState.numberFormat.format(_lucroTotal),
+              appState.numberFormat.format(_lucroMesAnterior),
+            ),
+            const SizedBox(height: 16),
             const Text(
               'Previsão de Recebimentos (Próximos Meses)',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -149,6 +157,71 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
+  Widget _buildLucroComparativoCard(String title, String valorAtual, String valorAnterior) {
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    String cleanedValorAnterior = valorAnterior.replaceAll(RegExp(r'[^\d.-]'), '').trim();
+    String cleanedValorAtual = valorAtual.replaceAll(RegExp(r'[^\d.-]'), '').trim();
+
+    double parsedValorAnterior = double.tryParse(cleanedValorAnterior) ?? 0.0;
+    double parsedValorAtual = double.tryParse(cleanedValorAtual) ?? 0.0;
+
+    final double diferenca = parsedValorAtual - parsedValorAnterior;
+    final percentual = parsedValorAnterior > 0
+        ? (diferenca / parsedValorAnterior) * 100
+        : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                appState.numberFormat.format(parsedValorAtual),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: diferenca > 0 ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mês Anterior: ${appState.numberFormat.format(parsedValorAnterior)}',
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildResumoCard(String title, String value, IconData icon, Color color) {
     return Container(
