@@ -879,86 +879,155 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
         ),
-        backgroundColor: Colors.grey[900],
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        backgroundColor: const Color(0xFF1E1E1E),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Selecionar Período',
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.calendar_today,
+                      color: Colors.blueAccent,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Selecionar Período',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Mês',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.grey[850],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.1),
                   ),
-                ),
-                child: DropdownButton<int>(
-                  value: mes,
-                  isExpanded: true,
-                  dropdownColor: Colors.grey[850],
-                  style: const TextStyle(color: Colors.white),
-                  underline: const SizedBox(),
-                  items: List.generate(
-                    meses.length,
-                        (index) => DropdownMenuItem(
-                      value: index, // Opção "Todos" tem valor 0
-                      child: Text(meses[index]),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                ),
+                child: StatefulBuilder(
+                  builder: (context, setState) => DropdownButton<int>(
+                    value: mes,
+                    isExpanded: true,
+                    dropdownColor: const Color(0xFF2C2C2C),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
+                    underline: const SizedBox(),
+                    items: List.generate(
+                      meses.length,
+                          (index) => DropdownMenuItem(
+                        value: index,
+                        child: Text(meses[index]),
+                      ),
+                    ),
+                    onChanged: (value) => setState(() => mes = value ?? mes),
                   ),
-                  onChanged: (value) => setState(() => mes = value ?? mes),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              Text(
+                'Ano',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.grey[850],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.1),
                   ),
-                ),
-                child: DropdownButton<int>(
-                  value: ano,
-                  isExpanded: true,
-                  dropdownColor: Colors.grey[850],
-                  style: const TextStyle(color: Colors.white),
-                  underline: const SizedBox(),
-                  items: List.generate(
-                    5,
-                        (index) => DropdownMenuItem(
-                      value: ano - 2 + index,
-                      child: Text((ano - 2 + index).toString()),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                ),
+                child: StatefulBuilder(
+                  builder: (context, setState) => DropdownButton<int>(
+                    value: ano,
+                    isExpanded: true,
+                    dropdownColor: const Color(0xFF2C2C2C),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
+                    underline: const SizedBox(),
+                    items: List.generate(
+                      5,
+                          (index) => DropdownMenuItem(
+                        value: ano - 2 + index,
+                        child: Text((ano - 2 + index).toString()),
+                      ),
+                    ),
+                    onChanged: (value) => setState(() => ano = value ?? ano),
                   ),
-                  onChanged: (value) => setState(() => ano = value ?? ano),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: Text(
                       'Cancelar',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(
                       context,
@@ -967,11 +1036,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Confirmar',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Confirmar'),
                   ),
                 ],
               ),
