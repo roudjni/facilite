@@ -290,102 +290,244 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
   Widget _buildPrevisaoRecebimentos() {
     if (_isLoadingPrevisao) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+      return Container(
+        height: 300,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[850]?.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+          ),
         ),
       );
     }
 
     if (_erroPrevisao != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              _erroPrevisao!,
-              style: const TextStyle(color: Colors.red, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _carregarPrevisao,
-              child: const Text('Tentar Novamente'),
-            ),
-          ],
+      return Container(
+        height: 300,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[850]?.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+              const SizedBox(height: 16),
+              Text(
+                _erroPrevisao!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _carregarPrevisao,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Tentar Novamente'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent.withOpacity(0.2),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_previsaoRecebimentos.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today_outlined, size: 48, color: Colors.white70),
-            SizedBox(height: 16),
-            Text(
-              'Nenhum recebimento previsto',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
-            ),
-          ],
+      return Container(
+        height: 300,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[850]?.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 48,
+                color: Colors.white.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Nenhum recebimento previsto',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     final previsaoExibida = _previsaoRecebimentos.sublist(
-        _indiceInicialPrevisao,
-        _indiceInicialPrevisao + _mesesExibidos > _previsaoRecebimentos.length
-            ? _previsaoRecebimentos.length
-            : _indiceInicialPrevisao + _mesesExibidos);
+      _indiceInicialPrevisao,
+      _indiceInicialPrevisao + _mesesExibidos > _previsaoRecebimentos.length
+          ? _previsaoRecebimentos.length
+          : _indiceInicialPrevisao + _mesesExibidos,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[850]?.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Previsão de Recebimentos',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: previsaoExibida.length,
-              itemBuilder: (context, index) {
-                final item = previsaoExibida[index];
-                return ListTile(
-                  title: Text(item['mes'], style: const TextStyle(color: Colors.white)),
-                  trailing: Text(
-                    'R\$ ${item['valor'].toStringAsFixed(2)}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white70),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up,
+                      color: Colors.blueAccent,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Previsão de Recebimentos',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.blueAccent.withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  'Próximos ${_mesesExibidos} meses',
+                  style: TextStyle(
+                    color: Colors.blueAccent.shade100,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Colors.white10),
+          const SizedBox(height: 16),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: previsaoExibida.length,
+            separatorBuilder: (context, index) => const Divider(
+              height: 16,
+              color: Colors.white10,
+            ),
+            itemBuilder: (context, index) {
+              final item = previsaoExibida[index];
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            item['mes'].substring(0, 3),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        item['mes'],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      NumberFormat.currency(
+                        locale: 'pt_BR',
+                        symbol: 'R\$',
+                      ).format(item['valor']),
+                      style: TextStyle(
+                        color: Colors.green.shade300,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Colors.white10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
                 onPressed: _indiceInicialPrevisao > 0
                     ? () {
                   setState(() {
@@ -393,9 +535,17 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   });
                 }
                     : null,
+                icon: const Icon(Icons.arrow_back, size: 16),
+                label: const Text('Anterior'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward, color: Colors.white70),
+              TextButton.icon(
                 onPressed: _indiceInicialPrevisao + _mesesExibidos < _previsaoRecebimentos.length
                     ? () {
                   setState(() {
@@ -403,6 +553,15 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
                   });
                 }
                     : null,
+                label: const Text('Próximo'),
+                icon: const Icon(Icons.arrow_forward, size: 16),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
               ),
             ],
           ),
