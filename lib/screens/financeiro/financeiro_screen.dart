@@ -30,7 +30,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final now = DateTime.now();
 
     final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
-    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month - 1 , now.year);
+    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month -1 , now.year);
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -56,10 +56,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Análise de Fluxo de Caixa',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -72,86 +68,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                     Colors.cyan,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child:  _buildLucroComparativoCard(
-                    context,
-                    'Lucro Atual x Anterior',
-                    appState.numberFormat.format(_lucroTotal),
-                    appState.numberFormat.format(_lucroMesAnterior),
-                  ),
-                ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLucroComparativoCard(BuildContext context,String title, String valorAtual, String valorAnterior) {
-    final appState = Provider.of<AppState>(context, listen: false);
-    String cleanedValorAnterior = valorAnterior.replaceAll(RegExp(r'[^\d.-]'), '').trim();
-    String cleanedValorAtual = valorAtual.replaceAll(RegExp(r'[^\d.-]'), '').trim();
-
-    double parsedValorAnterior = double.tryParse(cleanedValorAnterior) ?? 0.0;
-    double parsedValorAtual = double.tryParse(cleanedValorAtual) ?? 0.0;
-
-    final double diferenca = parsedValorAtual - parsedValorAnterior;
-    final percentual = parsedValorAnterior > 0
-        ? (diferenca / parsedValorAnterior) * 100
-        : 0.0;
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child:  Padding(
-        padding: const EdgeInsets.all(16),
-        child:  Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  appState.numberFormat.format(parsedValorAtual),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color:  diferenca > 0 ? Colors.green : Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mês Anterior: ${appState.numberFormat.format(parsedValorAnterior)}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
             ),
           ],
         ),
