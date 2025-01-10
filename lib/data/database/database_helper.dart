@@ -204,17 +204,4 @@ class DatabaseHelper {
     return await delete('simulacoes', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<List<Emprestimo>> getEmprestimosPorMesEAno(int mes, int ano) async {
-    final db = await database;
-
-    final List<Map<String, dynamic>> results = await db.query(
-      'emprestimos',
-      where: 'strftime("%m", data) = ? AND strftime("%Y", data) = ?',
-      whereArgs: [mes.toString().padLeft(2, '0'), ano.toString()],
-    );
-
-    return results.map((e) => Emprestimo.fromMap(e)).toList();
-  }
-
-
 }

@@ -92,53 +92,69 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
   Future<void> _carregarRelatorio({List<Emprestimo>? emprestimosFiltrados}) async {
     final appState = Provider.of<AppState>(context, listen: false);
 
-    final List<Emprestimo> emprestimos = emprestimosFiltrados ??
-        (mesSelecionado == TODOS_OS_MESES
-            ? await appState.databaseHelper.getAllEmprestimos()
-            : await appState.databaseHelper.getEmprestimosPorMesEAno(mesSelecionado, anoSelecionado));
+    print('Mês selecionado: $mesSelecionado');
+    print('Ano selecionado: $anoSelecionado');
+
+    // Obter todos os empréstimos, independentemente do filtro de data inicial
+    final List<Emprestimo> emprestimos = emprestimosFiltrados ?? await appState.databaseHelper.getAllEmprestimos();
+
+    print('Número de empréstimos encontrados (todos): ${emprestimos.length}');
 
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
     double lucroEsperado = 0.0;
-    double pendente = 0.0; // Variável para calcular o valor pendente do mês
+    double pendente = 0.0;
 
     for (final emprestimo in emprestimos) {
-      totalEmprestado += emprestimo.valor;
-      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
-      final recebido = emprestimo.parcelasDetalhes
-          .where((p) => p['status'] == 'Paga')
-          .fold(0.0, (sum, p) => sum + p['valor']);
-      totalRecebido += recebido;
-      lucroEsperado += valorTotal - emprestimo.valor;
+      // Buscar os detalhes do empréstimo atualizado
+      final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
 
-      // Cálculo do valor pendente para o mês selecionado
-      if (mesSelecionado != TODOS_OS_MESES) {
-        final parcelasPendentesMes = emprestimo.parcelasDetalhes.where((p) {
-          if (p['status'] == 'Paga') return false; // Já foi paga, não está pendente
+      if (emprestimoAtualizado != null) {
+        totalEmprestado += emprestimoAtualizado.valor;
+        final valorTotal = emprestimoAtualizado.valor * (1 + emprestimoAtualizado.juros / 100);
+        final recebido = emprestimoAtualizado.parcelasDetalhes
+            .where((p) => p['status'] == 'Paga')
+            .fold(0.0, (sum, p) => sum + p['valor']);
+        totalRecebido += recebido;
+        lucroEsperado += valorTotal - emprestimoAtualizado.valor;
 
-          final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
-          return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
-        });
+        // Cálculo do valor pendente para o mês selecionado
+        if (mesSelecionado != TODOS_OS_MESES) {
+          final parcelasPendentesMes = emprestimoAtualizado.parcelasDetalhes.where((p) {
+            if (p['status'] == 'Paga') return false;
 
-        for (final parcela in parcelasPendentesMes) {
-          pendente += parcela['valor'];
+            final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+            return dataVencimento.month == mesSelecionado && dataVencimento.year == anoSelecionado;
+          });
+
+          for (final parcela in parcelasPendentesMes) {
+            pendente += parcela['valor'];
+          }
+        } else {
+          pendente += valorTotal - recebido;
         }
-      } else {
-        // No caso de "Todos os Meses", mantém o cálculo do pendente total
-        pendente += valorTotal - recebido;
       }
     }
 
+    // Tendência de empréstimos (considerando apenas empréstimos com parcelas no mês)
     List<Map<String, dynamic>> tendenciaEmprestimos = [];
     if (mesSelecionado != TODOS_OS_MESES) {
       for (int i = 5; i >= 0; i--) {
         DateTime data = DateTime(anoSelecionado, mesSelecionado - i, 1);
         double valorEmprestadoMes = 0.0;
 
-        final emprestimosMes = await appState.databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
+        for (final emprestimo in emprestimos) {
+          final emprestimoAtualizado = await appState.databaseHelper.getEmprestimoById(emprestimo.id!);
+          if (emprestimoAtualizado != null) {
+            final temParcelaNoMes = emprestimoAtualizado.parcelasDetalhes.any((p) {
+              final dataVencimento = DateFormat('dd/MM/yyyy').parse(p['dataVencimento']);
+              return dataVencimento.month == data.month && dataVencimento.year == data.year;
+            });
 
-        for (final emprestimo in emprestimosMes) {
-          valorEmprestadoMes += emprestimo.valor;
+            if (temParcelaNoMes) {
+              valorEmprestadoMes += emprestimoAtualizado.valor;
+            }
+          }
         }
 
         tendenciaEmprestimos.add({
@@ -153,7 +169,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
         'totalEmprestado': totalEmprestado,
         'totalRecebido': totalRecebido,
         'lucro': lucroEsperado,
-        'pendente': pendente, // Agora calcula o pendente do mês ou o total
+        'pendente': pendente,
         'tendenciaEmprestimos': tendenciaEmprestimos,
       };
       _animationController.forward(from: 0.0);
@@ -915,4 +931,5 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
       ),
     );
   }
+
 }

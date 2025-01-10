@@ -377,7 +377,11 @@ class AppState extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> calcularRelatorioMensal(int mes, int ano) async {
-    final emprestimos = await _databaseHelper.getEmprestimosPorMesEAno(mes, ano);
+    // Removido a chamada para getEmprestimosPorMesEAno
+    // final emprestimos = await _databaseHelper.getEmprestimosPorMesEAno(mes, ano);
+
+    // Obter todos os empréstimos
+    final List<Emprestimo> emprestimos = await _databaseHelper.getAllEmprestimos();
 
     double totalEmprestado = 0.0;
     double totalRecebido = 0.0;
@@ -389,7 +393,13 @@ class AppState extends ChangeNotifier {
       DateTime data = DateTime(ano, mes - i, 1);
       double valorEmprestadoMes = 0.0;
 
-      final emprestimosMes = await _databaseHelper.getEmprestimosPorMesEAno(data.month, data.year);
+      // Modificado para filtrar empréstimos com parcelas no mês
+      final emprestimosMes = emprestimos.where((emprestimo) {
+        return emprestimo.parcelasDetalhes.any((parcela) {
+          final dataVencimento = _dateFormat.parse(parcela['dataVencimento']);
+          return dataVencimento.month == data.month && dataVencimento.year == data.year;
+        });
+      }).toList();
 
       for (final emprestimo in emprestimosMes) {
         valorEmprestadoMes += emprestimo.valor;
@@ -402,13 +412,19 @@ class AppState extends ChangeNotifier {
     }
 
     for (final emprestimo in emprestimos) {
-      totalEmprestado += emprestimo.valor;
-      final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
-      final recebido = emprestimo.parcelasDetalhes
-          .where((p) => p['status'] == 'Paga')
-          .fold(0.0, (sum, p) => sum + p['valor']);
-      totalRecebido += recebido;
-      lucro += recebido - emprestimo.valor;
+      // Filtrar para o mês e ano selecionados
+      if (emprestimo.parcelasDetalhes.any((parcela) {
+        final dataVencimento = _dateFormat.parse(parcela['dataVencimento']);
+        return dataVencimento.month == mes && dataVencimento.year == ano;
+      })) {
+        totalEmprestado += emprestimo.valor;
+        final valorTotal = emprestimo.valor * (1 + emprestimo.juros / 100);
+        final recebido = emprestimo.parcelasDetalhes
+            .where((p) => p['status'] == 'Paga')
+            .fold(0.0, (sum, p) => sum + p['valor']);
+        totalRecebido += recebido;
+        lucro += recebido - emprestimo.valor;
+      }
     }
 
     return {
