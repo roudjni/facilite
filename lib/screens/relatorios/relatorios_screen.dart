@@ -669,18 +669,77 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           color: Colors.white.withOpacity(0.1),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.pie_chart,
+                      color: Colors.purple,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.purple.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.touch_app,
+                      size: 12,
+                      color: Colors.purple,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Toque para zoom',
+                      style: TextStyle(
+                        color: Colors.purple.shade100,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Colors.white10),
           const SizedBox(height: 16),
           child,
         ],
@@ -694,21 +753,20 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
 
     if (relatorio != null) {
       if (_searchText.isNotEmpty) {
-        // Se houver uma busca por cliente, use os valores filtrados
         recebido = relatorio!['totalRecebido'] ?? 0.0;
         pendente = relatorio!['pendente'] ?? 0.0;
       } else if (mesSelecionado == TODOS_OS_MESES) {
-        // Se "Todos os Meses" estiver selecionado, calcule com base em todos os empréstimos
         recebido = relatorio!['totalRecebido'] ?? 0.0;
         pendente = relatorio!['pendente'] ?? 0.0;
       } else {
-        // Caso contrário, use os valores do relatório do mês selecionado
         recebido = relatorio!['totalRecebido'] ?? 0.0;
         pendente = relatorio!['pendente'] ?? 0.0;
       }
     }
 
     final total = recebido + pendente;
+    final recebidoPercentual = total > 0 ? (recebido / total) * 100 : 0.0;
+    final pendentePercentual = total > 0 ? (pendente / total) * 100 : 0.0;
 
     return GestureDetector(
       onTap: () {
@@ -716,94 +774,175 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> with SingleTickerPr
           _zoomLevel = _zoomLevel == 1.0 ? 1.5 : 1.0;
         });
       },
-      child: SizedBox(
-        height: 200,
-        child: Stack(
-          children: [
-            PieChart(
-              PieChartData(
-                pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                    setState(() {
-                      if (!event.isInterestedForInteractions ||
-                          pieTouchResponse == null ||
-                          pieTouchResponse.touchedSection == null) {
-                        return;
-                      }
-                    });
-                  },
+      child: Column(
+        children: [
+          SizedBox(
+            height: 200,
+            child: Stack(
+              children: [
+                PieChart(
+                  PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 35 * _zoomLevel,
+                    sections: [
+                      PieChartSectionData(
+                        value: recebido,
+                        color: Colors.green[400],
+                        title: '',
+                        radius: _initialRadius * _zoomLevel,
+                        badgeWidget: _buildBadgeWidget(
+                          recebidoPercentual,
+                          Colors.green[400]!,
+                        ),
+                        badgePositionPercentageOffset: 0.9,
+                        showTitle: false,
+                      ),
+                      PieChartSectionData(
+                        value: pendente,
+                        color: Colors.orange[400],
+                        title: '',
+                        radius: _initialRadius * _zoomLevel,
+                        badgeWidget: _buildBadgeWidget(
+                          pendentePercentual,
+                          Colors.orange[400]!,
+                        ),
+                        badgePositionPercentageOffset: 0.9,
+                        showTitle: false,
+                      ),
+                    ],
+                    borderData: FlBorderData(show: false),
+                  ),
                 ),
-                sections: [
-                  PieChartSectionData(
-                    value: recebido,
-                    color: Colors.green[400],
-                    title: total > 0 ? '${((recebido / total) * 100).toStringAsFixed(1)}%' : '0%',
-                    radius: _initialRadius * _zoomLevel,
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    badgeWidget: null,
-                    badgePositionPercentageOffset: .98,
-                  ),
-                  PieChartSectionData(
-                    value: pendente,
-                    color: Colors.orange[400],
-                    title: total > 0 ? '${((pendente / total) * 100).toStringAsFixed(1)}%' : '0%',
-                    radius: _initialRadius * _zoomLevel,
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    badgeWidget: null,
-                    badgePositionPercentageOffset: .98,
-                  ),
-                ],
-                sectionsSpace: 2,
-                centerSpaceRadius: 30 * _zoomLevel,
-                borderData: FlBorderData(show: false),
-              ),
-            ),
-            Positioned.fill(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
+                Center(
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildLegendaItem('Recebido', Colors.green[400]!),
-                      const SizedBox(width: 16),
-                      _buildLegendaItem('Pendente', Colors.orange[400]!),
+                      Text(
+                        'Total',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        NumberFormat.currency(
+                          locale: 'pt_BR',
+                          symbol: 'R\$',
+                        ).format(total),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildLegendaItemAtualizado(
+                'Recebido',
+                Colors.green[400]!,
+                recebido,
+                recebidoPercentual,
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: Colors.white.withOpacity(0.1),
+              ),
+              _buildLegendaItemAtualizado(
+                'Pendente',
+                Colors.orange[400]!,
+                pendente,
+                pendentePercentual,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadgeWidget(double percentage, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        '${percentage.toStringAsFixed(1)}%',
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildLegendaItem(String label, Color color) {
-    return Row(
+  Widget _buildLegendaItemAtualizado(
+      String label,
+      Color color,
+      double valor,
+      double percentual,
+      ) {
+    return Column(
       children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
+        Row(
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color,
+                  width: 2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          NumberFormat.currency(
+            locale: 'pt_BR',
+            symbol: 'R\$',
+          ).format(valor),
+          style: TextStyle(
             color: color,
-            shape: BoxShape.circle,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(width: 4),
         Text(
-          label,
+          '${percentual.toStringAsFixed(1)}%',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 11,
           ),
         ),
       ],
