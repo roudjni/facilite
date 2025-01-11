@@ -18,6 +18,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _totalPendente = 0.0;
   double _saldoAtual = 0.0;
   double _lucroMesAnterior = 0.0;
+  List<Map<String, dynamic>> _logs = [];
+
 
   @override
   void initState() {
@@ -28,6 +30,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   Future<void> _carregarDados() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final now = DateTime.now();
+    _logs = await appState.carregarLogsFinanceiros();
 
     final dadosFinanceiro =
     await appState.calcularRelatorioMensal(now.month, now.year);
@@ -45,6 +48,39 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     });
   }
 
+  Widget _buildLogs() {
+    if (_logs.isEmpty) {
+      return const Center(
+        child: Text(
+          'Nenhum log financeiro encontrado.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _logs.length,
+      itemBuilder: (context, index) {
+        final log = _logs[index];
+        return ListTile(
+          leading: Icon(
+            log['tipo'] == 'adicao' ? Icons.add : Icons.remove,
+            color: log['tipo'] == 'adicao' ? Colors.green : Colors.red,
+          ),
+          title: Text(
+            'R\$ ${log['valor'].toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          subtitle: Text(
+            '${log['usuario']} em ${log['data_hora']}',
+            style: const TextStyle(color: Colors.white70),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -59,7 +95,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            // Card Saldo Atual
             _buildCard(
               context,
               'Saldo Atual',
@@ -68,7 +103,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               Colors.cyan,
             ),
             const SizedBox(height: 16),
-            // Row com Botões Adicionar e Remover Dinheiro
             Row(
               children: [
                 Expanded(
@@ -92,9 +126,19 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 ),
               ],
             ),
-            // Você pode adicionar mais widgets aqui conforme necessário
+            const SizedBox(height: 16),
+            const Text(
+              'Histórico de Transações',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildLogs(),
           ],
-        ),
+        )
       ),
     );
   }
@@ -132,7 +176,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 final valorAdicionado = double.tryParse(
                     dinheiroController.text.replaceAll(',', '.'));
                 if (valorAdicionado != null && valorAdicionado > 0) {
-                  appState.adicionarSaldoDisponivel(valorAdicionado);
+                  appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
                   setState(() {
                     _saldoAtual = appState.saldoDisponivel;
                   });
@@ -188,7 +232,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                     dinheiroController.text.replaceAll(',', '.'));
                 if (valorRemovido != null && valorRemovido > 0) {
                   if (valorRemovido <= appState.saldoDisponivel) {
-                    appState.removerSaldoDisponivel(valorRemovido);
+                    appState.removerSaldoDisponivel(valorRemovido, appState.username);
                     setState(() {
                       _saldoAtual = appState.saldoDisponivel;
                     });

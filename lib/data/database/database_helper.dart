@@ -23,7 +23,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'facilite.db');
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -218,5 +218,19 @@ class DatabaseHelper {
     await db.update('financeiro', {'saldo_disponivel': saldo}, where: 'id = ?', whereArgs: [1]);
   }
 
+  Future<void> adicionarLogFinanceiro(String tipo, double valor, String usuario) async {
+    Database db = await instance.database;
+    await db.insert('financeiro_logs', {
+      'tipo': tipo,
+      'valor': valor,
+      'usuario': usuario,
+      'data_hora': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getLogsFinanceiros() async {
+    Database db = await instance.database;
+    return await db.query('financeiro_logs', orderBy: 'data_hora DESC');
+  }
 
 }

@@ -26,7 +26,9 @@ class DatabaseMigrations {
     if (oldVersion < 9) {
       await _migrationV9(db);
     }
-
+    if (oldVersion < 10) {
+      await _migrationV10(db);
+    }
   }
   static Future<void> _migrationV2(Database db) async {
     await db.execute('''
@@ -103,5 +105,17 @@ class DatabaseMigrations {
     // Inicializar com saldo padrão caso necessário
     await db.insert('financeiro', {'saldo_disponivel': 0});
   }
+  static Future<void> _migrationV10(Database db) async {
+    await db.execute('''
+      CREATE TABLE financeiro_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo TEXT NOT NULL, -- "adicao" ou "retirada"
+        valor REAL NOT NULL,
+        usuario TEXT NOT NULL,
+        data_hora TEXT NOT NULL -- ISO 8601 format
+      )
+  ''');
+  }
+
 
 }
