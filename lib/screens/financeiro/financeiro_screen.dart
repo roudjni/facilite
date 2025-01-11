@@ -179,7 +179,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
               onPressed: () async {
                 final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
                 if (valorAdicionado != null && valorAdicionado > 0) {
-                  appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
+                  await appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
                   await _carregarDados(); // Atualiza os dados da tela
                   Navigator.of(context).pop();
                 } else {
@@ -228,7 +228,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 final valorRemovido = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
                 if (valorRemovido != null && valorRemovido > 0) {
                   if (valorRemovido <= appState.saldoDisponivel) {
-                    appState.removerSaldoDisponivel(valorRemovido, appState.username);
+                    await appState.removerSaldoDisponivel(valorRemovido, appState.username);
                     await _carregarDados(); // Atualiza os dados da tela
                     Navigator.of(context).pop();
                   } else {

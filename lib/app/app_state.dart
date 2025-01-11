@@ -512,14 +512,14 @@ class AppState extends ChangeNotifier {
     };
   }
 
-  void adicionarSaldoDisponivel(double valor, String usuario) async {
+  Future<void> adicionarSaldoDisponivel(double valor, String usuario) async {
     _saldoDisponivel += valor;
     await salvarSaldo();
     await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario);
     notifyListeners();
   }
 
-  void removerSaldoDisponivel(double valor, String usuario) async {
+  Future<void> removerSaldoDisponivel(double valor, String usuario) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
       await salvarSaldo();
