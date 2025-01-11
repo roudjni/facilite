@@ -282,12 +282,28 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              _buildCard(
-                context,
-                'Saldo Atual',
-                appState.numberFormat.format(_saldoAtual),
-                Icons.account_balance,
-                Colors.cyan,
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildCard(
+                      context,
+                      'Saldo Atual',
+                      appState.numberFormat.format(_saldoAtual),
+                      Icons.account_balance,
+                      Colors.cyan,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildCard(
+                      context,
+                      'Saldo Previsto',
+                      appState.numberFormat.format(_saldoAtual + _lucroTotal),
+                      Icons.savings,
+                      Colors.purple,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Row(
