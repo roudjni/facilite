@@ -514,17 +514,19 @@ class AppState extends ChangeNotifier {
 
   Future<void> adicionarSaldoDisponivel(double valor, String usuario) async {
     _saldoDisponivel += valor;
+    print('Saldo atualizado: $_saldoDisponivel');
     await salvarSaldo();
     await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario);
-    notifyListeners();
+    notifyListeners(); // Apenas notifica quando necessário
   }
 
   Future<void> removerSaldoDisponivel(double valor, String usuario) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
+      print('Saldo atualizado: $_saldoDisponivel');
       await salvarSaldo();
       await _databaseHelper.adicionarLogFinanceiro('retirada', valor, usuario);
-      notifyListeners();
+      notifyListeners(); // Apenas notifica quando necessário
     } else {
       print('Saldo insuficiente para remover o valor solicitado.');
     }

@@ -21,6 +21,10 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _lucroMesAnterior = 0.0;
   List<Map<String, dynamic>> _logs = [];
 
+  // Pagination variables
+  int _currentPage = 0;
+  static const int _itemsPerPage = 7;
+  List<Map<String, dynamic>> _currentPageLogs = [];
 
   @override
   void initState() {
@@ -28,15 +32,25 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     _carregarDados();
   }
 
+  void _updateCurrentPageLogs() {
+    final startIndex = _currentPage * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+
+    setState(() {
+      _currentPageLogs = _logs.length > startIndex
+          ? _logs.sublist(startIndex, endIndex > _logs.length ? _logs.length : endIndex)
+          : [];
+    });
+  }
+
   Future<void> _carregarDados() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final now = DateTime.now();
-    _logs = await appState.carregarLogsFinanceiros();
 
-    final dadosFinanceiro =
-    await appState.calcularRelatorioMensal(now.month, now.year);
-    final dadosFinanceiroAnterior =
-    await appState.calcularRelatorioMensal(now.month - 1, now.year);
+    final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
+    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month - 1, now.year);
+
+    final logs = await appState.carregarLogsFinanceiros();
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -45,46 +59,146 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       _totalPendente = dadosFinanceiro['pendente'] ?? 0.0;
       _saldoAtual = appState.saldoDisponivel;
       _lucroMesAnterior = dadosFinanceiroAnterior['lucro'] ?? 0.0;
+      _logs = logs;
+      _currentPage = 0;
       _isLoading = false;
     });
+    _updateCurrentPageLogs();
   }
 
   Widget _buildLogs() {
     if (_logs.isEmpty) {
       return const Center(
         child: Text(
-          'Nenhum log financeiro encontrado.',
-          style: TextStyle(color: Colors.white70),
+          'Sem transações',
+          style: TextStyle(color: Colors.white54, fontSize: 13),
         ),
       );
     }
 
-    final dateFormat = DateFormat("dd 'de' MMMM 'de' yyyy, 'às' HH:mm", 'pt_BR');
+    final dateFormat = DateFormat("dd/MM", 'pt_BR');
 
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: _logs.length,
-      itemBuilder: (context, index) {
-        final log = _logs[index];
-        final DateTime dataHora = DateTime.parse(log['data_hora']);
-        final String dataFormatada = dateFormat.format(dataHora);
-        final String tipo = log['tipo'] == 'adicao' ? 'adicionou' : 'removeu';
+    return Card(
+      margin: const EdgeInsets.all(0),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.45,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              width: double.infinity,
+              color: Colors.black12,
+              child: const Text(
+                'Histórico de Transações',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _currentPageLogs.length,
+              itemBuilder: (context, index) {
+                final log = _currentPageLogs[index];
+                final DateTime dataHora = DateTime.parse(log['data_hora']);
+                final bool isAdicao = log['tipo'] == 'adicao';
+                final valor = log['valor'] as double;
 
-        return ListTile(
-          leading: Icon(
-            log['tipo'] == 'adicao' ? Icons.add : Icons.remove,
-            color: log['tipo'] == 'adicao' ? Colors.green : Colors.red,
-          ),
-          title: Text(
-            '${log['usuario']} $tipo R\$ ${log['valor'].toStringAsFixed(2)}',
-            style: const TextStyle(color: Colors.white),
-          ),
-          subtitle: Text(
-            'no dia $dataFormatada',
-            style: const TextStyle(color: Colors.white70),
-          ),
-        );
-      },
+                return Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        // Opcional: Adicionar detalhes da transação aqui
+                      },
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: isAdicao ? Colors.green[400] : Colors.red[400],
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${DateFormat("HH:mm").format(dataHora)} | ${dateFormat.format(dataHora)}',
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'R\$ ${valor.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: isAdicao ? Colors.green[400] : Colors.red[400],
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, thickness: 0.5, color: Colors.white12),
+                  ],
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, size: 16, color: Colors.white54),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                    onPressed: _currentPage > 0
+                        ? () {
+                      setState(() {
+                        _currentPage--;
+                      });
+                      _updateCurrentPageLogs();
+                    }
+                        : null,
+                  ),
+                  Text(
+                    '${_currentPage + 1}',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 12,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                    onPressed: (_currentPage + 1) * _itemsPerPage < _logs.length
+                        ? () {
+                      setState(() {
+                        _currentPage++;
+                      });
+                      _updateCurrentPageLogs();
+                    }
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -96,56 +210,50 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       title: 'Financeiro',
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            _buildCard(
-              context,
-              'Saldo Atual',
-              appState.numberFormat.format(_saldoAtual),
-              Icons.account_balance,
-              Colors.cyan,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionButton(
-                    context: context,
-                    icon: Icons.add_circle_outline,
-                    label: 'Adicionar Dinheiro',
-                    color: Colors.blue,
-                    onTap: _adicionarDinheiroDialog,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickActionButton(
-                    context: context,
-                    icon: Icons.remove_circle_outline,
-                    label: 'Remover Dinheiro',
-                    color: Colors.red,
-                    onTap: _removerDinheiroDialog,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Histórico de Transações',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+          : RefreshIndicator(
+        onRefresh: _carregarDados,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              _buildCard(
+                context,
+                'Saldo Atual',
+                appState.numberFormat.format(_saldoAtual),
+                Icons.account_balance,
+                Colors.cyan,
               ),
-            ),
-            const SizedBox(height: 8),
-            _buildLogs(),
-          ],
-        )
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickActionButton(
+                      context: context,
+                      icon: Icons.add_circle_outline,
+                      label: 'Adicionar Dinheiro',
+                      color: Colors.blue,
+                      onTap: _adicionarDinheiroDialog,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickActionButton(
+                      context: context,
+                      icon: Icons.remove_circle_outline,
+                      label: 'Remover Dinheiro',
+                      color: Colors.red,
+                      onTap: _removerDinheiroDialog,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildLogs(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -180,7 +288,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
                 if (valorAdicionado != null && valorAdicionado > 0) {
                   await appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
-                  await _carregarDados(); // Atualiza os dados da tela
+                  await _carregarDados();
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -229,7 +337,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 if (valorRemovido != null && valorRemovido > 0) {
                   if (valorRemovido <= appState.saldoDisponivel) {
                     await appState.removerSaldoDisponivel(valorRemovido, appState.username);
-                    await _carregarDados(); // Atualiza os dados da tela
+                    await _carregarDados();
                     Navigator.of(context).pop();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
