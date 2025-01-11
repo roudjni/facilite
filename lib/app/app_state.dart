@@ -308,7 +308,7 @@ class AppState extends ChangeNotifier {
     try {
       // Remove o empréstimo do banco de dados
       await _databaseHelper.deleteEmprestimo(emprestimo.id!);
-      await adicionarSaldoDisponivel(emprestimo.valor, username); // Adiciona o valor ao saldo
+      await adicionarSaldoDisponivel(emprestimo.valor, username); // Adiciona o valor do saldo
 
       // Remove o empréstimo da lista local
       _emprestimosRecentes.removeWhere((e) => e.id == emprestimo.id);
@@ -320,6 +320,7 @@ class AppState extends ChangeNotifier {
       rethrow;
     }
   }
+
 
   Future<void> criarEmprestimo(String cpfCnpj, String whatsapp, String? email, String? endereco) async {
     if (_parcelasDetalhadas.isEmpty) {
@@ -515,15 +516,17 @@ class AppState extends ChangeNotifier {
 
   Future<void> adicionarSaldoDisponivel(double valor, String usuario) async {
     _saldoDisponivel += valor;
+    await salvarSaldo();
     await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario);
-    notifyListeners();
+    notifyListeners(); // Apenas notifica quando necessário
   }
 
   Future<void> removerSaldoDisponivel(double valor, String usuario) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
+      await salvarSaldo();
       await _databaseHelper.adicionarLogFinanceiro('retirada', valor, usuario);
-      notifyListeners();
+      notifyListeners(); // Apenas notifica quando necessário
     } else {
       print('Saldo insuficiente para remover o valor solicitado.');
     }
@@ -541,21 +544,4 @@ class AppState extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> carregarLogsFinanceiros() async {
     return await _databaseHelper.getLogsFinanceiros();
   }
-
-  Future<void> adicionarSaldoDisponivelInterno(double valor) async {
-    _saldoDisponivel += valor;
-    await salvarSaldo();
-    notifyListeners();
-  }
-
-  Future<void> removerSaldoDisponivelInterno(double valor) async {
-    if (valor <= _saldoDisponivel) {
-      _saldoDisponivel -= valor;
-      await salvarSaldo();
-      notifyListeners();
-    } else {
-      print('Saldo insuficiente para remover o valor solicitado.');
-    }
-  }
-
 }
