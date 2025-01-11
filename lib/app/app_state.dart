@@ -10,6 +10,10 @@ class AppState extends ChangeNotifier {
   final SimulacaoService _simulacaoService = SimulacaoService();
   final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
 
+  AppState() {
+    carregarSaldo(); // Chama o metodo para carregar o saldo do banco de dados
+  }
+
   List<Simulacao> _simulacoes = [];
   List<Emprestimo> _emprestimosRecentes = [];
   bool _isLoading = false;
@@ -27,8 +31,6 @@ class AppState extends ChangeNotifier {
   String _origem = '';
   Emprestimo? _currentEmprestimo;
   double _saldoDisponivel = 0.0; // Adicionado o saldoDisponivel
-
-  AppState();
 
   // Getters e Setters
   String get username => _username;
@@ -68,7 +70,6 @@ class AppState extends ChangeNotifier {
     end = end > _emprestimosRecentes.length ? _emprestimosRecentes.length : end;
     return _emprestimosRecentes.sublist(start, end);
   }
-
   DatabaseHelper get databaseHelper => _databaseHelper;
 
   void nextPage() {
@@ -511,24 +512,29 @@ class AppState extends ChangeNotifier {
     };
   }
 
-  // Metodo para adicionar saldo ao disponível.
-  void adicionarSaldoDisponivel(double valor) {
+  void adicionarSaldoDisponivel(double valor) async {
     _saldoDisponivel += valor;
+    await salvarSaldo();
     notifyListeners();
   }
 
-  // Metodo para remover saldo disponível.
-  void removerSaldoDisponivel(double valor) {
+  void removerSaldoDisponivel(double valor) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
+      await salvarSaldo();
       notifyListeners();
     } else {
-      // Opcional: Lidar com caso onde o valor a remover excede o saldo disponível.
-      // Por exemplo, lançar uma exceção ou retornar um erro.
-      // Aqui, apenas print para demonstração.
       print('Saldo insuficiente para remover o valor solicitado.');
     }
   }
 
+  Future<void> carregarSaldo() async {
+    _saldoDisponivel = await _databaseHelper.getSaldoDisponivel();
+    notifyListeners();
+  }
+
+  Future<void> salvarSaldo() async {
+    await _databaseHelper.updateSaldoDisponivel(_saldoDisponivel);
+  }
 
 }

@@ -23,7 +23,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'facilite.db');
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -203,5 +203,20 @@ class DatabaseHelper {
   Future<int> deleteSimulacao(int id) async {
     return await delete('simulacoes', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<double> getSaldoDisponivel() async {
+    Database db = await instance.database;
+    final result = await db.query('financeiro', limit: 1);
+    if (result.isNotEmpty) {
+      return result.first['saldo_disponivel'] as double;
+    }
+    return 0.0;
+  }
+
+  Future<void> updateSaldoDisponivel(double saldo) async {
+    Database db = await instance.database;
+    await db.update('financeiro', {'saldo_disponivel': saldo}, where: 'id = ?', whereArgs: [1]);
+  }
+
 
 }

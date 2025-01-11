@@ -23,6 +23,10 @@ class DatabaseMigrations {
     if (oldVersion < 8) {
       await _migrationV8(db);
     }
+    if (oldVersion < 9) {
+      await _migrationV9(db);
+    }
+
   }
   static Future<void> _migrationV2(Database db) async {
     await db.execute('''
@@ -88,4 +92,16 @@ class DatabaseMigrations {
         ADD COLUMN resposta_seguranca TEXT;
       ''');
   }
+  static Future<void> _migrationV9(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS financeiro (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        saldo_disponivel REAL NOT NULL DEFAULT 0
+      )
+  ''');
+
+    // Inicializar com saldo padrão caso necessário
+    await db.insert('financeiro', {'saldo_disponivel': 0});
+  }
+
 }
