@@ -21,6 +21,7 @@ class SimulacaoForm extends StatefulWidget {
 
 class SimulacaoFormState extends State<SimulacaoForm> {
   final _formKey = GlobalKey<FormState>();
+  final _nomeController = TextEditingController();
   final _valorController = TextEditingController();
   final _parcelasController = TextEditingController();
   final _jurosController = TextEditingController();
@@ -32,6 +33,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
     super.initState();
     if (widget.simulacao != null) {
       final appState = Provider.of<AppState>(context, listen: false);
+      _nomeController.text = widget.simulacao!.nome;
       _valorController.text = appState.numberFormat.format(widget.simulacao!.valor).replaceAll('R\$', '').trim();
       _parcelasController.text = widget.simulacao!.parcelas.toString();
       _jurosController.text = widget.simulacao!.juros.toStringAsFixed(0);
@@ -42,6 +44,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
 
   @override
   void dispose() {
+    _nomeController.dispose();
     _valorController.dispose();
     _parcelasController.dispose();
     _jurosController.dispose();
@@ -58,6 +61,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
     int parcelasNum = int.parse(_parcelasController.text);
     double juros = double.parse(_jurosController.text.replaceAll('.', '').replaceAll(',', '.')) / 100;
 
+    appState.setNome(_nomeController.text);
     appState.setValor(valor);
     appState.setParcelas(parcelasNum);
     appState.setJuros(juros * 100);
@@ -98,7 +102,7 @@ class SimulacaoFormState extends State<SimulacaoForm> {
   // Metodo para obter os dados da simulação (será usado pela tela pai)
   Simulacao getSimulacaoData() {
     return Simulacao(
-      nome: '',
+      nome: _nomeController.text,
       valor: double.parse(
           _valorController.text.replaceAll('.', '').replaceAll(',', '.')),
       parcelas: int.parse(_parcelasController.text),
@@ -126,6 +130,19 @@ class SimulacaoFormState extends State<SimulacaoForm> {
       key: _formKey,
       child: Column(
         children: [
+          AppTextField(
+            controller: _nomeController,
+            label: 'Nome do Cliente',
+            icon: Icons.person_outline,
+            validator: (value) =>
+            value?.isEmpty ?? true ? 'Digite o nome do cliente' : null,
+            onChanged: (value) {
+              if (value.isNotEmpty) {
+                appState.setNome(value);
+              }
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(

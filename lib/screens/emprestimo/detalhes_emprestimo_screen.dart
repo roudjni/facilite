@@ -377,8 +377,8 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                   child: CircleAvatar(
                     radius: 24,
                     backgroundColor: accentColor.withOpacity(0.2),
-                    child: Text(
-                      widget.emprestimo.nome[0].toUpperCase(),
+                    child:  Text(
+                      widget.emprestimo.nome.isNotEmpty ? widget.emprestimo.nome[0].toUpperCase() : '?',
                       style: TextStyle(
                         color: accentColor,
                         fontSize: 20,
@@ -1019,7 +1019,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                             parcela['status'] = 'No prazo';
                             parcela['dataPagamento'] = null;
                           });
-
+                          await appState.removerSaldoDisponivel(parcela['valor'], appState.username); // Remove o valor do saldo
                           final emprestimo = widget.emprestimo;
                           emprestimo.parcelasDetalhes =
                               widget.emprestimo.parcelasDetalhes;
@@ -1050,7 +1050,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                                 parcela['dataPagamento'] =
                                     DateFormat('dd/MM/yyyy').format(hoje);
                               });
-
+                              await appState.adicionarSaldoDisponivel(parcela['valor'], appState.username); // Adiciona o valor ao saldo
                               final emprestimo = widget.emprestimo;
                               emprestimo.parcelasDetalhes =
                                   widget.emprestimo.parcelasDetalhes;
@@ -1095,6 +1095,7 @@ class _DetalhesEmprestimoScreenState extends State<DetalhesEmprestimoScreen> {
                                       DateFormat('dd/MM/yyyy')
                                           .format(dataEscolhida);
                                 });
+                                await appState.adicionarSaldoDisponivel(parcela['valor'], appState.username); // Adiciona o valor ao saldo
 
                                 final emprestimo = widget.emprestimo;
                                 emprestimo.parcelasDetalhes =

@@ -308,6 +308,7 @@ class AppState extends ChangeNotifier {
     try {
       // Remove o empréstimo do banco de dados
       await _databaseHelper.deleteEmprestimo(emprestimo.id!);
+      await adicionarSaldoDisponivel(emprestimo.valor, username); // Adiciona o valor ao saldo
 
       // Remove o empréstimo da lista local
       _emprestimosRecentes.removeWhere((e) => e.id == emprestimo.id);
@@ -319,7 +320,6 @@ class AppState extends ChangeNotifier {
       rethrow;
     }
   }
-
 
   Future<void> criarEmprestimo(String cpfCnpj, String whatsapp, String? email, String? endereco) async {
     if (_parcelasDetalhadas.isEmpty) {
@@ -345,6 +345,7 @@ class AppState extends ChangeNotifier {
       );
 
       await _databaseHelper.criarEmprestimo(emprestimo);
+      await removerSaldoDisponivel(emprestimo.valor, username); // Subtrai o valor do saldo
       _emprestimosRecentes.add(emprestimo); // Adiciona à lista local
     } finally {
       setLoading(false);
@@ -514,19 +515,15 @@ class AppState extends ChangeNotifier {
 
   Future<void> adicionarSaldoDisponivel(double valor, String usuario) async {
     _saldoDisponivel += valor;
-    print('Saldo atualizado: $_saldoDisponivel');
-    await salvarSaldo();
     await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario);
-    notifyListeners(); // Apenas notifica quando necessário
+    notifyListeners();
   }
 
   Future<void> removerSaldoDisponivel(double valor, String usuario) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
-      print('Saldo atualizado: $_saldoDisponivel');
-      await salvarSaldo();
       await _databaseHelper.adicionarLogFinanceiro('retirada', valor, usuario);
-      notifyListeners(); // Apenas notifica quando necessário
+      notifyListeners();
     } else {
       print('Saldo insuficiente para remover o valor solicitado.');
     }
@@ -545,5 +542,20 @@ class AppState extends ChangeNotifier {
     return await _databaseHelper.getLogsFinanceiros();
   }
 
+  Future<void> adicionarSaldoDisponivelInterno(double valor) async {
+    _saldoDisponivel += valor;
+    await salvarSaldo();
+    notifyListeners();
+  }
+
+  Future<void> removerSaldoDisponivelInterno(double valor) async {
+    if (valor <= _saldoDisponivel) {
+      _saldoDisponivel -= valor;
+      await salvarSaldo();
+      notifyListeners();
+    } else {
+      print('Saldo insuficiente para remover o valor solicitado.');
+    }
+  }
 
 }
