@@ -754,8 +754,11 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
             context,
             label: 'Previsão Anual',
             icon: Icons.calendar_today,
-            color: Colors.green,
-            onTap: () => Navigator.pop(context, 'anual'),
+            color: Colors.blue,
+            onTap: () {
+              Navigator.pop(context); // Fecha o diálogo principal
+              _exibirDialogoAnos(context); // Abre o diálogo de anos
+            },
           ),
         ],
       ),
@@ -862,5 +865,110 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       ),
     );
   }
+
+  void _exibirDialogoAnos(BuildContext context) {
+    final int anoAtual = DateTime.now().year;
+    final List<int> anos = [
+      anoAtual - 2,
+      anoAtual - 1,
+      anoAtual,
+      anoAtual + 1,
+      anoAtual + 2,
+      anoAtual + 3,
+    ];
+
+    DialogDefault.show(
+      context: context,
+      title: 'Selecione o Ano',
+      icon: Icons.calendar_today,
+      accentColor: Colors.blue,
+      content: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: GridView.builder(
+          shrinkWrap: true,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3, // 3 colunas
+            childAspectRatio: 1.5,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: anos.length,
+          itemBuilder: (context, index) {
+            final ano = anos[index];
+            return _buildBotaoAnoCompacto(context, ano, ano == anoAtual);
+          },
+        ),
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBotaoAnoCompacto(BuildContext context, int ano, bool isAnoAtual) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isAnoAtual ? Colors.blue : Colors.blue.withOpacity(0.3),
+          width: isAnoAtual ? 2 : 1,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            Navigator.pop(context);
+            await _calcularValoresReceberNoAno(context, ano);
+          },
+          child: Center(
+            child: Text(
+              '$ano',
+              style: TextStyle(
+                color: isAnoAtual ? Colors.white : Colors.white70,
+                fontSize: 14,
+                fontWeight: isAnoAtual ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _calcularValoresReceberNoAno(BuildContext context, int anoSelecionado) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    double saldoAtual = appState.saldoDisponivel;
+
+    double valoresReceberNoAno = 0.0;
+    for (final emprestimo in appState.emprestimosRecentes) {
+      for (final parcela in emprestimo.parcelasDetalhes) {
+        final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+        if (dataVencimento.year == anoSelecionado && parcela['status'] != 'Paga') {
+          valoresReceberNoAno += parcela['valor'];
+        }
+      }
+    }
+
+    setState(() {
+      _saldoPrevisto = saldoAtual + valoresReceberNoAno; // Soma saldo atual + valor previsto do ano
+      _dataSaldoPrevisto = DateTime(anoSelecionado); // Atualiza o ano selecionado
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Ano selecionado: $anoSelecionado. '
+              'Saldo Previsto: R\$ ${_saldoPrevisto.toStringAsFixed(2)}',
+        ),
+      ),
+    );
+  }
+
+
 
 }
