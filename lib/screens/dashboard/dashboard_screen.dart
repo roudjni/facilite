@@ -31,10 +31,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'color': Colors.green,
     },
     {
-      'icon': Icons.storage,
-      'label': 'Simulações Salvas',
-      'route': '/simulacoes-salvas',
-      'color': Colors.purple,
+      'icon': Icons.account_balance_wallet,
+      'label': 'Financeiro',
+      'route': '/financeiro',
+      'color': Colors.purple, // Escolha a cor desejada
     },
   ];
   bool _isFirstLoad = true;
@@ -73,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: _buildInfoCard(
                       title: 'Total Emprestado',
-                      value: 'R\$ 15.000,00',
+                      value: appState.numberFormat.format(appState.totalEmprestado),
                       icon: Icons.payments,
                       color: Colors.green,
                     ),

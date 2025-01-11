@@ -574,4 +574,9 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  double get totalEmprestado {
+    return _emprestimosRecentes.fold(0.0, (sum, emprestimo) => sum + emprestimo.valor);
+  }
+
+
 }
