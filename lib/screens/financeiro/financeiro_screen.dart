@@ -538,8 +538,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String value,
-      IconData icon, Color color) {
+  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -551,36 +550,63 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: color, size: 16),
-                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    Icon(icon, color: color, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            IconButton(
+              icon: Icon(Icons.calendar_today, color: color),
+              onPressed: () {
+                // Ação ao clicar no botão
+                _exibirCalendario(context);
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _exibirCalendario(BuildContext context) {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    ).then((date) {
+      if (date != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Data selecionada: ${DateFormat('dd/MM/yyyy').format(date)}')),
+        );
+      }
+    });
   }
 
   Widget _buildQuickActionButton({
