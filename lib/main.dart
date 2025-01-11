@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/financeiro',
+      initialRoute: '/dashboard',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/simulacao':

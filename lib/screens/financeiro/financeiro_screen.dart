@@ -25,6 +25,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _lucroMesAnterior = 0.0;
   List<Map<String, dynamic>> _logs = [];
   double _saldoPrevisto = 0.0;
+  DateTime _dataSaldoPrevisto = DateTime.now();
 
 
   // Pagination variables
@@ -304,6 +305,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                       NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(_saldoPrevisto),
                       Icons.savings,
                       Colors.purple,
+                      subtitulo: '(${DateFormat("d 'de' MMMM 'de' yyyy", 'pt_BR').format(_dataSaldoPrevisto)})',
                     ),
                   ),
                 ],
@@ -541,7 +543,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color, {String? subtitulo}) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -571,6 +573,16 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (subtitulo != null) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        subtitulo,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -601,7 +613,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AppCalendarDialog(
-          initialDate: DateTime.now(),
+          initialDate: _dataSaldoPrevisto,
         );
       },
     );
@@ -609,7 +621,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
 
       setState(() {
-        _saldoPrevisto = valoresReceberNoDia; // Atualiza o saldo previsto diretamente no estado
+        _saldoPrevisto = valoresReceberNoDia;
+        _dataSaldoPrevisto = selectedDate; // Atualiza a data exibida ao lado do título
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
