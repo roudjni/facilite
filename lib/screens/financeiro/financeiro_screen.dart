@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/main_layout.dart';
@@ -58,22 +59,28 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       );
     }
 
+    final dateFormat = DateFormat("dd 'de' MMMM 'de' yyyy, 'às' HH:mm", 'pt_BR');
+
     return ListView.builder(
       shrinkWrap: true,
       itemCount: _logs.length,
       itemBuilder: (context, index) {
         final log = _logs[index];
+        final DateTime dataHora = DateTime.parse(log['data_hora']);
+        final String dataFormatada = dateFormat.format(dataHora);
+        final String tipo = log['tipo'] == 'adicao' ? 'adicionou' : 'removeu';
+
         return ListTile(
           leading: Icon(
             log['tipo'] == 'adicao' ? Icons.add : Icons.remove,
             color: log['tipo'] == 'adicao' ? Colors.green : Colors.red,
           ),
           title: Text(
-            'R\$ ${log['valor'].toStringAsFixed(2)}',
+            '${log['usuario']} $tipo R\$ ${log['valor'].toStringAsFixed(2)}',
             style: const TextStyle(color: Colors.white),
           ),
           subtitle: Text(
-            '${log['usuario']} em ${log['data_hora']}',
+            'no dia $dataFormatada',
             style: const TextStyle(color: Colors.white70),
           ),
         );
@@ -150,8 +157,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title:
-          const Text('Adicionar Dinheiro', style: TextStyle(color: Colors.white)),
+          title: const Text('Adicionar Dinheiro', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.grey[900],
           content: TextField(
             controller: dinheiroController,
@@ -163,29 +169,23 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar',
-                  style: TextStyle(color: Colors.white70)),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Adicionar',
-                  style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                final valorAdicionado = double.tryParse(
-                    dinheiroController.text.replaceAll(',', '.'));
+              child: const Text('Adicionar', style: TextStyle(color: Colors.white)),
+              onPressed: () async {
+                final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
                 if (valorAdicionado != null && valorAdicionado > 0) {
                   appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
-                  setState(() {
-                    _saldoAtual = appState.saldoDisponivel;
-                  });
+                  await _carregarDados(); // Atualiza os dados da tela
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Valor inválido!",
-                          style: TextStyle(color: Colors.white)),
+                      content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -205,8 +205,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title:
-          const Text('Remover Dinheiro', style: TextStyle(color: Colors.white)),
+          title: const Text('Remover Dinheiro', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.grey[900],
           content: TextField(
             controller: dinheiroController,
@@ -218,30 +217,24 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar',
-                  style: TextStyle(color: Colors.white70)),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Remover',
-                  style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                final valorRemovido = double.tryParse(
-                    dinheiroController.text.replaceAll(',', '.'));
+              child: const Text('Remover', style: TextStyle(color: Colors.white)),
+              onPressed: () async {
+                final valorRemovido = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
                 if (valorRemovido != null && valorRemovido > 0) {
                   if (valorRemovido <= appState.saldoDisponivel) {
                     appState.removerSaldoDisponivel(valorRemovido, appState.username);
-                    setState(() {
-                      _saldoAtual = appState.saldoDisponivel;
-                    });
+                    await _carregarDados(); // Atualiza os dados da tela
                     Navigator.of(context).pop();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Saldo insuficiente!",
-                            style: TextStyle(color: Colors.white)),
+                        content: Text("Saldo insuficiente!", style: TextStyle(color: Colors.white)),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -249,8 +242,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Valor inválido!",
-                          style: TextStyle(color: Colors.white)),
+                      content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
                       backgroundColor: Colors.red,
                     ),
                   );
