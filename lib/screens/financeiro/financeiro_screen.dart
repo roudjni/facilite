@@ -306,7 +306,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                       Icons.savings,
                       Colors.purple,
                       subtitulo: '(${DateFormat("d 'de' MMMM 'de' yyyy", 'pt_BR').format(_dataSaldoPrevisto)})',
-                      saldoAtual: NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(_saldoAtual),
+                      diferencaSaldo: _saldoPrevisto - _saldoAtual, // Calcula a diferença
                     ),
                   ),
                 ],
@@ -534,7 +534,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color, {String? subtitulo, String? saldoAtual}) {
+  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color, {String? subtitulo, double? diferencaSaldo}) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -587,13 +587,14 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (saldoAtual != null) ...[
+                    if (diferencaSaldo != null) ...[
                       const SizedBox(width: 8),
                       Text(
-                        '($saldoAtual)',
+                        '(R\$ ${diferencaSaldo.toStringAsFixed(2)})',
                         style: const TextStyle(
-                          color: Colors.white54,
+                          color: Color(0xFF4CAF50), // Verde do histórico de transações
                           fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
