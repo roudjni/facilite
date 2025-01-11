@@ -603,20 +603,23 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AppCalendarDialog(
-          initialDate: DateTime.now(),
+          initialDate: _dataSaldoPrevisto,
         );
       },
     );
 
     if (selectedDate != null) {
-      // Lógica para processar a data selecionada
+      double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
+
       setState(() {
-        _dataSaldoPrevisto = selectedDate; // Atualiza a data prevista
+        _saldoPrevisto = valoresReceberNoDia; // Atualiza o saldo previsto
+        _dataSaldoPrevisto = selectedDate;   // Atualiza a data prevista
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}. Valores a receber: R\$ ${valoresReceberNoDia.toStringAsFixed(2)}',
           ),
         ),
       );
@@ -634,7 +637,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     for (final emprestimo in appState.emprestimosRecentes) {
       for (final parcela in emprestimo.parcelasDetalhes) {
         if (parcela['status'] != 'Paga' && parcela['dataVencimento'] == dataFormatada) {
-          valoresReceber += parcela['valor'] as double;
+          valoresReceber += parcela['valor'];
         }
       }
     }
