@@ -603,22 +603,20 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AppCalendarDialog(
-          initialDate: _dataSaldoPrevisto,
+          initialDate: DateTime.now(),
         );
       },
     );
+
     if (selectedDate != null) {
-      double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
-
+      // Lógica para processar a data selecionada
       setState(() {
-        _saldoPrevisto = valoresReceberNoDia + _saldoAtual; // Soma o valor do dia selecionado com o Saldo Atual
-        _dataSaldoPrevisto = selectedDate; // Atualiza a data exibida ao lado do título
+        _dataSaldoPrevisto = selectedDate; // Atualiza a data prevista
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}. Valores a receber: R\$ ${valoresReceberNoDia.toStringAsFixed(2)}',
+            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
           ),
         ),
       );
@@ -701,7 +699,10 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
             label: 'Previsão Diária',
             icon: Icons.calendar_view_day,
             color: Colors.blue,
-            onTap: () => Navigator.pop(context, 'diaria'),
+            onTap: () {
+              Navigator.pop(context); // Fecha o diálogo
+              _exibirCalendarioDialog(context); // Chama o calendário
+            },
           ),
           const SizedBox(height: 8),
           _buildOpcaoPrevisao(
