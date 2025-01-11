@@ -647,6 +647,35 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     return valoresReceber;
   }
 
+  Future<void> _calcularValoresReceberNoMes(BuildContext context, int mesSelecionado) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    double saldoAtual = appState.saldoDisponivel;
+
+    double valoresReceberNoMes = 0.0;
+    for (final emprestimo in appState.emprestimosRecentes) {
+      for (final parcela in emprestimo.parcelasDetalhes) {
+        final dataVencimento = DateFormat('dd/MM/yyyy').parse(parcela['dataVencimento']);
+        if (dataVencimento.month == mesSelecionado && parcela['status'] != 'Paga') {
+          valoresReceberNoMes += parcela['valor'];
+        }
+      }
+    }
+
+    setState(() {
+      _saldoPrevisto = saldoAtual + valoresReceberNoMes; // Soma saldo atual + valor previsto do mês
+      _dataSaldoPrevisto = DateTime(DateTime.now().year, mesSelecionado); // Atualiza a data do saldo
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Mês selecionado: ${DateFormat("MMMM", "pt_BR").format(_dataSaldoPrevisto)}. '
+              'Saldo Previsto: R\$ ${_saldoPrevisto.toStringAsFixed(2)}',
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickActionButton({
     required BuildContext context,
     required IconData icon,
@@ -715,7 +744,10 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
             label: 'Previsão Mensal',
             icon: Icons.calendar_view_month,
             color: Colors.orange,
-            onTap: () => Navigator.pop(context, 'mensal'),
+            onTap: () {
+              Navigator.pop(context); // Fecha o diálogo principal
+              _exibirDialogoMeses(context); // Abre o diálogo de meses
+            },
           ),
           const SizedBox(height: 8),
           _buildOpcaoPrevisao(
@@ -769,34 +801,63 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildPrevisaoOption(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required VoidCallback onTap,
-      }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[700]!),
+  void _exibirDialogoMeses(BuildContext context) {
+    DialogDefault.show(
+      context: context,
+      title: 'Selecione o Mês',
+      icon: Icons.calendar_month,
+      accentColor: Colors.orange,
+      content: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: GridView.builder(
+          shrinkWrap: true,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 1.5,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: 12,
+          itemBuilder: (context, index) {
+            final mes = DateTime(0, index + 1).toLocal();
+            final nomeMes = DateFormat('MMM', 'pt_BR').format(mes).toUpperCase();
+            return _buildBotaoMesCompacto(context, mes, nomeMes);
+          },
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.blue[300], size: 24),
-            const SizedBox(width: 12),
-            Text(
-              label,
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBotaoMesCompacto(BuildContext context, DateTime mes, String nomeMes) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            Navigator.pop(context);
+            await _calcularValoresReceberNoMes(context, mes.month);
+          },
+          child: Center(
+            child: Text(
+              nomeMes,
               style: const TextStyle(
-                color: Colors.white70,
+                color: Colors.white,
                 fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
