@@ -37,6 +37,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   void initState() {
     super.initState();
     _carregarDados();
+    _calcularSaldoPrevistoDoDiaAtual();
   }
 
   void _updateCurrentPageLogs() {
@@ -985,6 +986,17 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
+  Future<void> _calcularSaldoPrevistoDoDiaAtual() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    double saldoAtual = appState.saldoDisponivel;
+
+    double valoresReceberNoDia = await _calcularValoresReceberNoDia(DateTime.now());
+
+    setState(() {
+      _saldoPrevisto = saldoAtual + valoresReceberNoDia; // Soma saldo atual + valores do dia atual
+      _dataSaldoPrevisto = DateTime.now(); // Define a data do saldo previsto como o dia atual
+    });
+  }
 
 
 }
