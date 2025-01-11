@@ -1,5 +1,6 @@
 import 'package:facilite/data/models/usuario.dart';
 import 'package:facilite/data/services/auth_service.dart';
+import 'package:facilite/widgets/shared/calendar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -584,8 +585,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
             IconButton(
               icon: Icon(Icons.calendar_today, color: color),
               onPressed: () {
-                // Ação ao clicar no botão
-                _exibirCalendario(context);
+                _exibirCalendarioDialog(context);
               },
             ),
           ],
@@ -594,19 +594,22 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  void _exibirCalendario(BuildContext context) {
-    showDatePicker(
+  void _exibirCalendarioDialog(BuildContext context) async {
+    final DateTime? selectedDate = await showDialog<DateTime>(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    ).then((date) {
-      if (date != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Data selecionada: ${DateFormat('dd/MM/yyyy').format(date)}')),
+      builder: (BuildContext context) {
+        return AppCalendarDialog(
+          initialDate: DateTime.now(),
         );
-      }
-    });
+      },
+    );
+    if (selectedDate != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}'),
+        ),
+      );
+    }
   }
 
   Widget _buildQuickActionButton({
