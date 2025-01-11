@@ -550,4 +550,28 @@ class AppState extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> carregarLogsFinanceiros() async {
     return await _databaseHelper.getLogsFinanceiros();
   }
+
+  void formatarValor(TextEditingController controller, String value) {
+    // Remove caracteres não numéricos, exceto vírgulas e pontos
+    value = value.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Verifica se o valor está vazio
+    if (value.isEmpty) {
+      controller.text = '';
+      return;
+    }
+
+    // Converte o valor inserido para decimal (centavos)
+    double parsed = double.parse(value) / 100;
+
+    // Formata o valor utilizando o NumberFormat
+    String formatted = numberFormat.format(parsed);
+
+    // Atualiza o valor do controlador e reposiciona o cursor
+    controller.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
 }

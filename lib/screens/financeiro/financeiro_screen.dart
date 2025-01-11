@@ -347,32 +347,18 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final appState = Provider.of<AppState>(context, listen: false);
     final dinheiroController = TextEditingController();
 
-    void _formatarValor(TextEditingController controller, String value) {
-      value = value.replaceAll(RegExp(r'[^0-9]'), '');
-      if (value.isEmpty) {
-        controller.text = '';
-        return;
-      }
-      final parsed = double.parse(value) / 100;
-      controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '').trim();
-      controller.selection = TextSelection.fromPosition(
-        TextPosition(offset: controller.text.length),
-      );
-    }
-
-
     DialogDefault.show(
       context: context,
       title: 'Adicionar Dinheiro',
       icon: Icons.add_circle_outline,
       accentColor: Colors.blue,
-      content:  DialogDefault.createTextField(
+      content: DialogDefault.createTextField(
         controller: dinheiroController,
         hintText: 'Valor',
         prefixIcon: Icons.monetization_on_outlined,
         accentColor: Colors.blue,
         keyboardType: TextInputType.number,
-        onChanged: (value) => _formatarValor(dinheiroController, value),
+        onChanged: (value) => appState.formatarValor(dinheiroController, value),
       ),
       actions: [
         DialogDefault.createCancelButton(
@@ -382,7 +368,15 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           text: 'Adicionar',
           color: Colors.blue,
           onPressed: () async {
-            final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
+            // Remove R$, pontos e substitui vírgula por ponto para parsing
+            final valorTexto = dinheiroController.text
+                .replaceAll('R\$', '')
+                .replaceAll('.', '')
+                .trim()
+                .replaceAll(',', '.');
+
+            final valorAdicionado = double.tryParse(valorTexto);
+
             if (valorAdicionado != null && valorAdicionado > 0) {
               await appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
               await _carregarDados();
@@ -405,30 +399,18 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final appState = Provider.of<AppState>(context, listen: false);
     final dinheiroController = TextEditingController();
 
-    void _formatarValor(TextEditingController controller, String value) {
-      value = value.replaceAll(RegExp(r'[^0-9]'), '');
-      if (value.isEmpty) {
-        controller.text = '';
-        return;
-      }
-      final parsed = double.parse(value) / 100;
-      controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '').trim();
-      controller.selection = TextSelection.fromPosition(
-        TextPosition(offset: controller.text.length),
-      );
-    }
     DialogDefault.show(
       context: context,
       title: 'Remover Dinheiro',
       icon: Icons.remove_circle_outline,
       accentColor: Colors.red,
-      content:  DialogDefault.createTextField(
+      content: DialogDefault.createTextField(
         controller: dinheiroController,
         hintText: 'Valor',
         prefixIcon: Icons.monetization_on_outlined,
         accentColor: Colors.red,
         keyboardType: TextInputType.number,
-        onChanged: (value) => _formatarValor(dinheiroController, value),
+        onChanged: (value) => appState.formatarValor(dinheiroController, value),
       ),
       actions: [
         DialogDefault.createCancelButton(
@@ -438,7 +420,15 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           text: 'Remover',
           color: Colors.red,
           onPressed: () async {
-            final valorRemovido = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
+            // Remove R$, pontos e substitui vírgula por ponto para parsing
+            final valorTexto = dinheiroController.text
+                .replaceAll('R\$', '')
+                .replaceAll('.', '')
+                .trim()
+                .replaceAll(',', '.');
+
+            final valorRemovido = double.tryParse(valorTexto);
+
             if (valorRemovido != null && valorRemovido > 0) {
               if (valorRemovido <= appState.saldoDisponivel) {
                 await appState.removerSaldoDisponivel(valorRemovido, appState.username);
