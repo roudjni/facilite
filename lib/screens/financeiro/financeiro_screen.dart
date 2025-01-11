@@ -610,16 +610,18 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
     if (selectedDate != null) {
       double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
+      final appState = Provider.of<AppState>(context, listen: false);
+      double saldoAtual = appState.saldoDisponivel;
 
       setState(() {
-        _saldoPrevisto = valoresReceberNoDia; // Atualiza o saldo previsto
-        _dataSaldoPrevisto = selectedDate;   // Atualiza a data prevista
+        _saldoPrevisto = saldoAtual + valoresReceberNoDia; // Soma saldo atual + valor previsto do dia
+        _dataSaldoPrevisto = selectedDate; // Atualiza a data prevista
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}. Valores a receber: R\$ ${valoresReceberNoDia.toStringAsFixed(2)}',
+            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}. Saldo Previsto: R\$ ${_saldoPrevisto.toStringAsFixed(2)}',
           ),
         ),
       );
