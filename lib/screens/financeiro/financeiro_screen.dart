@@ -621,7 +621,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
 
       setState(() {
-        _saldoPrevisto = valoresReceberNoDia;
+        _saldoPrevisto = valoresReceberNoDia + _saldoAtual; // Soma o valor do dia selecionado com o Saldo Atual
         _dataSaldoPrevisto = selectedDate; // Atualiza a data exibida ao lado do título
       });
 
