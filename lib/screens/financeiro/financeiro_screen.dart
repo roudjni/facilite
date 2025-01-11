@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:facilite/app/app_state.dart';
 import 'package:facilite/widgets/main_layout.dart';
+import 'package:facilite/widgets/dialog_default.dart';
 
 class FinanceiroScreen extends StatefulWidget {
   const FinanceiroScreen({Key? key}) : super(key: key);
@@ -178,6 +179,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     }
 
     final dateFormat = DateFormat("dd/MM", 'pt_BR');
+    final appState = Provider.of<AppState>(context, listen: false);
 
     return  ListView.builder(
       shrinkWrap: true,
@@ -219,7 +221,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      'R\$ ${valor.toStringAsFixed(2)}',
+                      appState.numberFormat.format(valor),
                       style: TextStyle(
                         color: isAdicao ? Colors.green[400] : Colors.red[400],
                         fontSize: 13,
@@ -237,87 +239,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       },
     );
 
-  }
-
-  Future<void> _showPasswordDialog() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    final _senhaController = TextEditingController();
-    bool _obscurePassword = true; // Para controlar a visibilidade da senha
-    final AuthService _authService = AuthService(); // Instância do AuthService
-
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Autenticação Necessária', style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.grey[900],
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return  TextField(
-                controller: _senhaController,
-                obscureText: _obscurePassword,
-                decoration:  InputDecoration(
-                  labelText: 'Senha',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: Colors.white70,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-                style: const TextStyle(color: Colors.white),
-              );
-            },
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Autenticar', style: TextStyle(color: Colors.white)),
-              onPressed: () async {
-                final senha = _senhaController.text.trim();
-                if (senha.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Digite sua senha!", style: TextStyle(color: Colors.white)),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-                try {
-                  final usuario = appState.username;
-                  final Usuario? user = await _authService.autenticar(usuario, senha);
-                  if (user != null) {
-                    await _limparLogsInterno();
-                    Navigator.of(context).pop();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Senha inválida!", style: TextStyle(color: Colors.white)),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    _senhaController.clear();
-                  }
-                } finally {
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Future<void> _limparLogsInterno() async {
@@ -395,105 +316,200 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   Future<void> _adicionarDinheiroDialog() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final dinheiroController = TextEditingController();
-    showDialog(
+
+    void _formatarValor(TextEditingController controller, String value) {
+      value = value.replaceAll(RegExp(r'[^0-9]'), '');
+      if (value.isEmpty) {
+        controller.text = '';
+        return;
+      }
+      final parsed = double.parse(value) / 100;
+      controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '').trim();
+      controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length),
+      );
+    }
+
+
+    DialogDefault.show(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Adicionar Dinheiro', style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.grey[900],
-          content: TextField(
-            controller: dinheiroController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-                labelText: 'Valor',
-                labelStyle: TextStyle(color: Colors.white70)),
-            style: const TextStyle(color: Colors.white),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Adicionar', style: TextStyle(color: Colors.white)),
-              onPressed: () async {
-                final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
-                if (valorAdicionado != null && valorAdicionado > 0) {
-                  await appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
-                  await _carregarDados();
-                  Navigator.of(context).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
+      title: 'Adicionar Dinheiro',
+      icon: Icons.add_circle_outline,
+      accentColor: Colors.blue,
+      content:  DialogDefault.createTextField(
+        controller: dinheiroController,
+        hintText: 'Valor',
+        prefixIcon: Icons.monetization_on_outlined,
+        accentColor: Colors.blue,
+        keyboardType: TextInputType.number,
+        onChanged: (value) => _formatarValor(dinheiroController, value),
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        DialogDefault.createActionButton(
+          text: 'Adicionar',
+          color: Colors.blue,
+          onPressed: () async {
+            final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
+            if (valorAdicionado != null && valorAdicionado > 0) {
+              await appState.adicionarSaldoDisponivel(valorAdicionado, appState.username);
+              await _carregarDados();
+              Navigator.of(context).pop();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
   Future<void> _removerDinheiroDialog() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final dinheiroController = TextEditingController();
-    showDialog(
+
+    void _formatarValor(TextEditingController controller, String value) {
+      value = value.replaceAll(RegExp(r'[^0-9]'), '');
+      if (value.isEmpty) {
+        controller.text = '';
+        return;
+      }
+      final parsed = double.parse(value) / 100;
+      controller.text = appState.numberFormat.format(parsed).replaceAll('R\$', '').trim();
+      controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length),
+      );
+    }
+    DialogDefault.show(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Remover Dinheiro', style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.grey[900],
-          content: TextField(
-            controller: dinheiroController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-                labelText: 'Valor',
-                labelStyle: TextStyle(color: Colors.white70)),
-            style: const TextStyle(color: Colors.white),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-              onPressed: () {
+      title: 'Remover Dinheiro',
+      icon: Icons.remove_circle_outline,
+      accentColor: Colors.red,
+      content:  DialogDefault.createTextField(
+        controller: dinheiroController,
+        hintText: 'Valor',
+        prefixIcon: Icons.monetization_on_outlined,
+        accentColor: Colors.red,
+        keyboardType: TextInputType.number,
+        onChanged: (value) => _formatarValor(dinheiroController, value),
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        DialogDefault.createActionButton(
+          text: 'Remover',
+          color: Colors.red,
+          onPressed: () async {
+            final valorRemovido = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
+            if (valorRemovido != null && valorRemovido > 0) {
+              if (valorRemovido <= appState.saldoDisponivel) {
+                await appState.removerSaldoDisponivel(valorRemovido, appState.username);
+                await _carregarDados();
                 Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Saldo insuficiente!", style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showPasswordDialog() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final _senhaController = TextEditingController();
+    bool _obscurePassword = true; // Para controlar a visibilidade da senha
+    final AuthService _authService = AuthService(); // Instância do AuthService
+
+    DialogDefault.show(
+      context: context,
+      title: 'Autenticação Necessária',
+      icon: Icons.lock_outline,
+      accentColor: Colors.orange,
+      content: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return  DialogDefault.createTextField(
+            controller: _senhaController,
+            hintText: 'Senha',
+            prefixIcon: Icons.lock,
+            accentColor: Colors.orange,
+            obscureText: _obscurePassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
               },
             ),
-            ElevatedButton(
-              child: const Text('Remover', style: TextStyle(color: Colors.white)),
-              onPressed: () async {
-                final valorRemovido = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
-                if (valorRemovido != null && valorRemovido > 0) {
-                  if (valorRemovido <= appState.saldoDisponivel) {
-                    await appState.removerSaldoDisponivel(valorRemovido, appState.username);
-                    await _carregarDados();
-                    Navigator.of(context).pop();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Saldo insuficiente!", style: TextStyle(color: Colors.white)),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        DialogDefault.createActionButton(
+          text: 'Autenticar',
+          color: Colors.orange,
+          onPressed: () async {
+            final senha = _senhaController.text.trim();
+            if (senha.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Digite sua senha!", style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+            try {
+              final usuario = appState.username;
+              final Usuario? user = await _authService.autenticar(usuario, senha);
+              if (user != null) {
+                await _limparLogsInterno();
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Senha inválida!", style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                _senhaController.clear();
+              }
+            } finally {
+
+            }
+          },
+        ),
+      ],
     );
   }
 
