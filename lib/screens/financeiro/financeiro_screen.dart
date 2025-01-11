@@ -306,6 +306,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                       Icons.savings,
                       Colors.purple,
                       subtitulo: '(${DateFormat("d 'de' MMMM 'de' yyyy", 'pt_BR').format(_dataSaldoPrevisto)})',
+                      saldoAtual: NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(_saldoAtual),
                     ),
                   ),
                 ],
@@ -533,7 +534,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color, {String? subtitulo}) {
+  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color, {String? subtitulo, String? saldoAtual}) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -576,13 +577,27 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (saldoAtual != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '($saldoAtual)',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
