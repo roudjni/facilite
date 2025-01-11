@@ -517,5 +517,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Metodo para remover saldo disponível.
+  void removerSaldoDisponivel(double valor) {
+    if (valor <= _saldoDisponivel) {
+      _saldoDisponivel -= valor;
+      notifyListeners();
+    } else {
+      // Opcional: Lidar com caso onde o valor a remover excede o saldo disponível.
+      // Por exemplo, lançar uma exceção ou retornar um erro.
+      // Aqui, apenas print para demonstração.
+      print('Saldo insuficiente para remover o valor solicitado.');
+    }
+  }
+
 
 }

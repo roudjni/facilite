@@ -29,9 +29,10 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     final appState = Provider.of<AppState>(context, listen: false);
     final now = DateTime.now();
 
-    final dadosFinanceiro = await appState.calcularRelatorioMensal(now.month, now.year);
-    final dadosFinanceiroAnterior = await appState.calcularRelatorioMensal(now.month - 1 , now.year);
-
+    final dadosFinanceiro =
+    await appState.calcularRelatorioMensal(now.month, now.year);
+    final dadosFinanceiroAnterior =
+    await appState.calcularRelatorioMensal(now.month - 1, now.year);
 
     setState(() {
       _totalEmprestado = dadosFinanceiro['totalEmprestado'] ?? 0.0;
@@ -58,35 +59,45 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
+            // Card Saldo Atual
+            _buildCard(
+              context,
+              'Saldo Atual',
+              appState.numberFormat.format(_saldoAtual),
+              Icons.account_balance,
+              Colors.cyan,
+            ),
+            const SizedBox(height: 16),
+            // Row com Botões Adicionar e Remover Dinheiro
             Row(
               children: [
                 Expanded(
-                  child: _buildCard(
-                    context,
-                    'Saldo Atual',
-                    appState.numberFormat.format(_saldoAtual),
-                    Icons.account_balance,
-                    Colors.cyan,
+                  child: _buildQuickActionButton(
+                    context: context,
+                    icon: Icons.add_circle_outline,
+                    label: 'Adicionar Dinheiro',
+                    color: Colors.blue,
+                    onTap: _adicionarDinheiroDialog,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildQuickActionButton(
-                      context,
-                      icon: Icons.add_circle_outline,
-                      label: 'Adicionar Dinheiro',
-                      color: Colors.blue,
-                      onTap: _adicionarDinheiroDialog
+                    context: context,
+                    icon: Icons.remove_circle_outline,
+                    label: 'Remover Dinheiro',
+                    color: Colors.red,
+                    onTap: _removerDinheiroDialog,
                   ),
                 ),
               ],
             ),
+            // Você pode adicionar mais widgets aqui conforme necessário
           ],
         ),
       ),
     );
   }
-
 
   Future<void> _adicionarDinheiroDialog() async {
     final appState = Provider.of<AppState>(context, listen: false);
@@ -95,40 +106,42 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Adicionar Dinheiro', style: TextStyle(color: Colors.white)),
+          title:
+          const Text('Adicionar Dinheiro', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.grey[900],
           content: TextField(
             controller: dinheiroController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
                 labelText: 'Valor',
-                labelStyle: TextStyle(color: Colors.white70)
-            ),
+                labelStyle: TextStyle(color: Colors.white70)),
             style: const TextStyle(color: Colors.white),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Colors.white70)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Adicionar', style: TextStyle(color: Colors.white)),
+              child: const Text('Adicionar',
+                  style: TextStyle(color: Colors.white)),
               onPressed: () {
-                final valorAdicionado = double.tryParse(dinheiroController.text.replaceAll(',', '.'));
-                if(valorAdicionado != null)
-                {
+                final valorAdicionado = double.tryParse(
+                    dinheiroController.text.replaceAll(',', '.'));
+                if (valorAdicionado != null && valorAdicionado > 0) {
                   appState.adicionarSaldoDisponivel(valorAdicionado);
                   setState(() {
                     _saldoAtual = appState.saldoDisponivel;
                   });
                   Navigator.of(context).pop();
-                }
-                else {
+                } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Valor inválido!", style: TextStyle(color: Colors.white)),
+                      content: Text("Valor inválido!",
+                          style: TextStyle(color: Colors.white)),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -141,8 +154,74 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String value, IconData icon, Color color) {
-    return  Card(
+  Future<void> _removerDinheiroDialog() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final dinheiroController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title:
+          const Text('Remover Dinheiro', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.grey[900],
+          content: TextField(
+            controller: dinheiroController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+                labelText: 'Valor',
+                labelStyle: TextStyle(color: Colors.white70)),
+            style: const TextStyle(color: Colors.white),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Colors.white70)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Remover',
+                  style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                final valorRemovido = double.tryParse(
+                    dinheiroController.text.replaceAll(',', '.'));
+                if (valorRemovido != null && valorRemovido > 0) {
+                  if (valorRemovido <= appState.saldoDisponivel) {
+                    appState.removerSaldoDisponivel(valorRemovido);
+                    setState(() {
+                      _saldoAtual = appState.saldoDisponivel;
+                    });
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Saldo insuficiente!",
+                            style: TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Valor inválido!",
+                          style: TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(BuildContext context, String title, String value,
+      IconData icon, Color color) {
+    return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -153,7 +232,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child:  Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -185,113 +264,43 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
     );
   }
 
-  Widget _buildLucroComparativoCard(BuildContext context,String title, String valorAtual, String valorAnterior) {
-    final appState = Provider.of<AppState>(context, listen: false);
-    String cleanedValorAnterior = valorAnterior.replaceAll(RegExp(r'[^\d.-]'), '').trim();
-    String cleanedValorAtual = valorAtual.replaceAll(RegExp(r'[^\d.-]'), '').trim();
-
-    double parsedValorAnterior = double.tryParse(cleanedValorAnterior) ?? 0.0;
-    double parsedValorAtual = double.tryParse(cleanedValorAtual) ?? 0.0;
-
-    final double diferenca = parsedValorAtual - parsedValorAnterior;
-    final percentual = parsedValorAnterior > 0
-        ? (diferenca / parsedValorAnterior) * 100
-        : 0.0;
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child:  Padding(
-        padding: const EdgeInsets.all(16),
-        child:  Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+  Widget _buildQuickActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return Container(
+      height: 72,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  appState.numberFormat.format(parsedValorAtual),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 28, color: color),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(
-                  '${percentual.isNaN ? 0.0 : percentual.toStringAsFixed(2)}%',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color:  diferenca > 0 ? Colors.green : Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mês Anterior: ${appState.numberFormat.format(parsedValorAnterior)}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildQuickActionButton(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required VoidCallback onTap,
-        required Color color,
-      }) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            height: 72,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 28, color: color),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
