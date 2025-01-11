@@ -1,3 +1,5 @@
+import 'package:facilite/data/models/usuario.dart';
+import 'package:facilite/data/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -67,6 +69,105 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   }
 
   Widget _buildLogs() {
+    return Card(
+      margin: const EdgeInsets.all(0),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.45,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              width: double.infinity,
+              color: Colors.black12,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Text(
+                      'Histórico de Transações',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                    onPressed: () async {
+                      await _showPasswordDialog();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            if (_logs.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: Text(
+                    'Sem transações',
+                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  _buildLogList(),
+                  if (_logs.length > _itemsPerPage)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios, size: 16, color: Colors.white54),
+                            padding: const EdgeInsets.all(4),
+                            constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                            onPressed: _currentPage > 0
+                                ? () {
+                              setState(() {
+                                _currentPage--;
+                              });
+                              _updateCurrentPageLogs();
+                            }
+                                : null,
+                          ),
+                          Text(
+                            '${_currentPage + 1}',
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
+                            padding: const EdgeInsets.all(4),
+                            constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                            onPressed: (_currentPage + 1) * _itemsPerPage < _logs.length
+                                ? () {
+                              setState(() {
+                                _currentPage++;
+                              });
+                              _updateCurrentPageLogs();
+                            }
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogList() {
     if (_logs.isEmpty) {
       return const Center(
         child: Text(
@@ -78,126 +179,159 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
     final dateFormat = DateFormat("dd/MM", 'pt_BR');
 
-    return Card(
-      margin: const EdgeInsets.all(0),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.45,
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              width: double.infinity,
-              color: Colors.black12,
-              child: const Text(
-                'Histórico de Transações',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _currentPageLogs.length,
-              itemBuilder: (context, index) {
-                final log = _currentPageLogs[index];
-                final DateTime dataHora = DateTime.parse(log['data_hora']);
-                final bool isAdicao = log['tipo'] == 'adicao';
-                final valor = log['valor'] as double;
+    return  ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _currentPageLogs.length,
+      itemBuilder: (context, index) {
+        final log = _currentPageLogs[index];
+        final DateTime dataHora = DateTime.parse(log['data_hora']);
+        final bool isAdicao = log['tipo'] == 'adicao';
+        final valor = log['valor'] as double;
 
-                return Column(
+        return Column(
+          children: [
+            InkWell(
+              onTap: () {
+                // Opcional: Adicionar detalhes da transação aqui
+              },
+              child: Container(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
                   children: [
-                    InkWell(
-                      onTap: () {
-                        // Opcional: Adicionar detalhes da transação aqui
-                      },
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: isAdicao ? Colors.green[400] : Colors.red[400],
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${DateFormat("HH:mm").format(dataHora)} | ${dateFormat.format(dataHora)}',
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              'R\$ ${valor.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: isAdicao ? Colors.green[400] : Colors.red[400],
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: 4,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: isAdicao ? Colors.green[400] : Colors.red[400],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const Divider(height: 1, thickness: 0.5, color: Colors.white12),
-                  ],
-                );
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 16, color: Colors.white54),
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-                    onPressed: _currentPage > 0
-                        ? () {
-                      setState(() {
-                        _currentPage--;
-                      });
-                      _updateCurrentPageLogs();
-                    }
-                        : null,
-                  ),
-                  Text(
-                    '${_currentPage + 1}',
-                    style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12,
+                    const SizedBox(width: 8),
+                    Text(
+                      '${DateFormat("HH:mm").format(dataHora)} | ${dateFormat.format(dataHora)}',
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-                    onPressed: (_currentPage + 1) * _itemsPerPage < _logs.length
-                        ? () {
-                      setState(() {
-                        _currentPage++;
-                      });
-                      _updateCurrentPageLogs();
-                    }
-                        : null,
-                  ),
-                ],
+                    const Spacer(),
+                    Text(
+                      'R\$ ${valor.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: isAdicao ? Colors.green[400] : Colors.red[400],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            const Divider(height: 1, thickness: 0.5, color: Colors.white12),
           ],
-        ),
+        );
+      },
+    );
+
+  }
+
+  Future<void> _showPasswordDialog() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final _senhaController = TextEditingController();
+    bool _obscurePassword = true; // Para controlar a visibilidade da senha
+    final AuthService _authService = AuthService(); // Instância do AuthService
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Autenticação Necessária', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.grey[900],
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return  TextField(
+                controller: _senhaController,
+                obscureText: _obscurePassword,
+                decoration:  InputDecoration(
+                  labelText: 'Senha',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+              );
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Autenticar', style: TextStyle(color: Colors.white)),
+              onPressed: () async {
+                final senha = _senhaController.text.trim();
+                if (senha.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Digite sua senha!", style: TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                try {
+                  final usuario = appState.username;
+                  final Usuario? user = await _authService.autenticar(usuario, senha);
+                  if (user != null) {
+                    await _limparLogsInterno();
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Senha inválida!", style: TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    _senhaController.clear();
+                  }
+                } finally {
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _limparLogsInterno() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    await appState.databaseHelper.delete("financeiro_logs");
+    setState(() {
+      _logs = [];
+      _currentPageLogs = [];
+    });
+    _updateCurrentPageLogs();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Histórico de transações limpo com sucesso!'),
+        backgroundColor: Colors.green,
       ),
     );
   }
