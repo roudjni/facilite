@@ -688,59 +688,78 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   }
 
   void _exibirDialogoPrevisao(BuildContext context) {
-    showDialog(
+    DialogDefault.show(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      title: 'Selecione a Previsão',
+      icon: Icons.calendar_today,
+      accentColor: Colors.blue,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildOpcaoPrevisao(
+            context,
+            label: 'Previsão Diária',
+            icon: Icons.calendar_view_day,
+            color: Colors.blue,
+            onTap: () => Navigator.pop(context, 'diaria'),
           ),
-          backgroundColor: const Color(0xFF1A1A1A),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Escolha a Previsão',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildPrevisaoOption(
-                  context,
-                  icon: Icons.calendar_view_day,
-                  label: 'Previsão Diária',
-                  onTap: () {
-                    Navigator.pop(context, 'diaria');
-                  },
-                ),
-                const SizedBox(height: 8),
-                _buildPrevisaoOption(
-                  context,
-                  icon: Icons.calendar_view_month,
-                  label: 'Previsão Mensal',
-                  onTap: () {
-                    Navigator.pop(context, 'mensal');
-                  },
-                ),
-                const SizedBox(height: 8),
-                _buildPrevisaoOption(
-                  context,
-                  icon: Icons.calendar_today,
-                  label: 'Previsão Anual',
-                  onTap: () {
-                    Navigator.pop(context, 'anual');
-                  },
-                ),
-              ],
+          const SizedBox(height: 8),
+          _buildOpcaoPrevisao(
+            context,
+            label: 'Previsão Mensal',
+            icon: Icons.calendar_view_month,
+            color: Colors.orange,
+            onTap: () => Navigator.pop(context, 'mensal'),
+          ),
+          const SizedBox(height: 8),
+          _buildOpcaoPrevisao(
+            context,
+            label: 'Previsão Anual',
+            icon: Icons.calendar_today,
+            color: Colors.green,
+            onTap: () => Navigator.pop(context, 'anual'),
+          ),
+        ],
+      ),
+      actions: [
+        DialogDefault.createCancelButton(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOpcaoPrevisao(
+      BuildContext context, {
+        required String label,
+        required IconData icon,
+        required Color color,
+        required VoidCallback onTap,
+      }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
