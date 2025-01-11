@@ -24,6 +24,8 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   double _saldoAtual = 0.0;
   double _lucroMesAnterior = 0.0;
   List<Map<String, dynamic>> _logs = [];
+  double _saldoPrevisto = 0.0;
+
 
   // Pagination variables
   int _currentPage = 0;
@@ -299,7 +301,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                     child: _buildCard(
                       context,
                       'Saldo Previsto',
-                      appState.numberFormat.format(_saldoAtual + _lucroTotal),
+                      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(_saldoPrevisto),
                       Icons.savings,
                       Colors.purple,
                     ),
@@ -604,12 +606,39 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
       },
     );
     if (selectedDate != null) {
+      double valoresReceberNoDia = await _calcularValoresReceberNoDia(selectedDate);
+
+      setState(() {
+        _saldoPrevisto = valoresReceberNoDia; // Atualiza o saldo previsto diretamente no estado
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}'),
+          content: Text(
+            'Data selecionada: ${DateFormat('dd/MM/yyyy').format(selectedDate)}. Valores a receber: R\$ ${valoresReceberNoDia.toStringAsFixed(2)}',
+          ),
         ),
       );
     }
+  }
+
+  Future<double> _calcularValoresReceberNoDia(DateTime date) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    // Formata a data para o padrão dd/MM/yyyy
+    final String dataFormatada = DateFormat('dd/MM/yyyy').format(date);
+
+    double valoresReceber = 0.0;
+
+    for (final emprestimo in appState.emprestimosRecentes) {
+      for (final parcela in emprestimo.parcelasDetalhes) {
+        if (parcela['status'] != 'Paga' && parcela['dataVencimento'] == dataFormatada) {
+          valoresReceber += parcela['valor'] as double;
+        }
+      }
+    }
+
+    return valoresReceber;
   }
 
   Widget _buildQuickActionButton({
