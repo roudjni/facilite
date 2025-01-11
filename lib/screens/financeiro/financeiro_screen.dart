@@ -219,7 +219,16 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
                         fontFamily: 'monospace',
                       ),
                     ),
-                    const Spacer(),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          log['descricao'] ?? '',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
                     Text(
                       appState.numberFormat.format(valor),
                       style: TextStyle(

@@ -308,7 +308,7 @@ class AppState extends ChangeNotifier {
     try {
       // Remove o empréstimo do banco de dados
       await _databaseHelper.deleteEmprestimo(emprestimo.id!);
-      await adicionarSaldoDisponivel(emprestimo.valor, username); // Adiciona o valor do saldo
+      await adicionarSaldoDisponivel(emprestimo.valor, username, descricao: 'Emprestimo de ${emprestimo.nome} excluido');// Adiciona o valor do saldo
 
       // Remove o empréstimo da lista local
       _emprestimosRecentes.removeWhere((e) => e.id == emprestimo.id);
@@ -318,38 +318,6 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       // Trate o erro conforme necessário
       rethrow;
-    }
-  }
-
-
-  Future<void> criarEmprestimo(String cpfCnpj, String whatsapp, String? email, String? endereco) async {
-    if (_parcelasDetalhadas.isEmpty) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      final emprestimo = Emprestimo(
-        nome: _nome,
-        valor: _valor,
-        parcelas: _parcelas,
-        juros: _juros,
-        data: DateTime.now(),
-        tipoParcela: _tipoParcela,
-        cpfCnpj: cpfCnpj.trim(),
-        whatsapp: whatsapp.trim(),
-        email: email?.trim() ?? '',
-        endereco: endereco?.trim() ?? '',
-        parcelasDetalhes: _parcelasDetalhadas,
-        dataVencimento: _dataVencimento ?? DateTime.now(),
-      );
-
-      await _databaseHelper.criarEmprestimo(emprestimo);
-      await removerSaldoDisponivel(emprestimo.valor, username); // Subtrai o valor do saldo
-      _emprestimosRecentes.add(emprestimo); // Adiciona à lista local
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -514,18 +482,56 @@ class AppState extends ChangeNotifier {
     };
   }
 
-  Future<void> adicionarSaldoDisponivel(double valor, String usuario) async {
+  Future<void> criarEmprestimo(String cpfCnpj, String whatsapp, String? email, String? endereco) async {
+    if (_parcelasDetalhadas.isEmpty) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      final emprestimo = Emprestimo(
+        nome: _nome,
+        valor: _valor,
+        parcelas: _parcelas,
+        juros: _juros,
+        data: DateTime.now(),
+        tipoParcela: _tipoParcela,
+        cpfCnpj: cpfCnpj.trim(),
+        whatsapp: whatsapp.trim(),
+        email: email?.trim() ?? '',
+        endereco: endereco?.trim() ?? '',
+        parcelasDetalhes: _parcelasDetalhadas,
+        dataVencimento: _dataVencimento ?? DateTime.now(),
+      );
+      // Verificar se o emprestimo é antigo
+      if (emprestimo.data.isBefore(DateTime(2024, 1, 19))) { // Use uma data apropriada
+        await _databaseHelper.criarEmprestimo(emprestimo);
+        await removerSaldoDisponivel(emprestimo.valor, username, descricao: 'Emprestimo para $_nome feito');
+        _emprestimosRecentes.add(emprestimo); // Adiciona à lista local
+      } else{
+        await _databaseHelper.criarEmprestimo(emprestimo);
+        await removerSaldoDisponivel(emprestimo.valor, username, descricao: 'Emprestimo para $_nome feito');
+        _emprestimosRecentes.add(emprestimo); // Adiciona à lista local
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> adicionarSaldoDisponivel(double valor, String usuario, {String? descricao}) async {
     _saldoDisponivel += valor;
     await salvarSaldo();
-    await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario);
+    await _databaseHelper.adicionarLogFinanceiro('adicao', valor, usuario, descricao: descricao ?? 'Valor adicionado manualmente');
     notifyListeners(); // Apenas notifica quando necessário
   }
 
-  Future<void> removerSaldoDisponivel(double valor, String usuario) async {
+  Future<void> removerSaldoDisponivel(double valor, String usuario, {String? descricao}) async {
     if (valor <= _saldoDisponivel) {
       _saldoDisponivel -= valor;
       await salvarSaldo();
-      await _databaseHelper.adicionarLogFinanceiro('retirada', valor, usuario);
+      await _databaseHelper.adicionarLogFinanceiro('retirada', valor, usuario, descricao: descricao ?? 'Valor retirado manualmente');
       notifyListeners(); // Apenas notifica quando necessário
     } else {
       print('Saldo insuficiente para remover o valor solicitado.');

@@ -23,7 +23,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'facilite.db');
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -80,6 +80,25 @@ class DatabaseHelper {
         data_vencimento TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS financeiro (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        saldo_disponivel REAL NOT NULL DEFAULT 0
+      )
+  ''');
+
+    // Inicializar com saldo padrão caso necessário
+    await db.insert('financeiro', {'saldo_disponivel': 0});
+
+    await db.execute('''
+      CREATE TABLE financeiro_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo TEXT NOT NULL, -- "adicao" ou "retirada"
+        valor REAL NOT NULL,
+        usuario TEXT NOT NULL,
+        data_hora TEXT NOT NULL -- ISO 8601 format
+      )
+  ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -218,13 +237,14 @@ class DatabaseHelper {
     await db.update('financeiro', {'saldo_disponivel': saldo}, where: 'id = ?', whereArgs: [1]);
   }
 
-  Future<void> adicionarLogFinanceiro(String tipo, double valor, String usuario) async {
+  Future<void> adicionarLogFinanceiro(String tipo, double valor, String usuario, {String? descricao}) async {
     Database db = await instance.database;
     await db.insert('financeiro_logs', {
       'tipo': tipo,
       'valor': valor,
       'usuario': usuario,
       'data_hora': DateTime.now().toIso8601String(),
+      'descricao' : descricao,
     });
   }
 

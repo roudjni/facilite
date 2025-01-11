@@ -29,6 +29,15 @@ class DatabaseMigrations {
     if (oldVersion < 10) {
       await _migrationV10(db);
     }
+    if (oldVersion < 11) {
+      await _migrationV11(db);
+    }
+  }
+  static Future<void> _migrationV11(Database db) async {
+    await db.execute('''
+        ALTER TABLE financeiro_logs
+        ADD COLUMN descricao TEXT;
+        ''');
   }
   static Future<void> _migrationV2(Database db) async {
     await db.execute('''
